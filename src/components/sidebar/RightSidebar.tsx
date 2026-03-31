@@ -27,7 +27,7 @@ const MOCK_RUNS: WorkflowRunRecord[] = [
     durationMs: 1200,
     createdAt: new Date("2026-01-14T16:30:00"),
     nodeRuns: [
-      { nodeId: "n3", nodeType: "llmNode", nodeLabel: "LLM Node", status: "failed", inputs: {}, outputs: {}, error: "API rate limit exceeded", error: "API rate limit exceeded", durationMs: 1200 },
+      { nodeId: "n3", nodeType: "llmNode", nodeLabel: "LLM Node", status: "failed", inputs: {}, outputs: {}, error: "API rate limit exceeded", durationMs: 1200 },
     ],
   },
 ]
