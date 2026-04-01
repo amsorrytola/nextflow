@@ -1,0 +1,75 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Workflow {
+  id          String        @id @default(cuid())
+  userId      String
+  name        String        @default("Untitled Workflow")
+  description String?
+  nodes       Json          @default("[]")
+  edges       Json          @default("[]")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  runs        WorkflowRun[]
+
+  @@index([userId])
+}
+
+model WorkflowRun {
+  id         String      @id @default(cuid())
+  workflowId String
+  userId     String
+  runNumber  Int
+  scope      RunScope    @default(FULL)
+  status     RunStatus   @default(RUNNING)
+  durationMs Int         @default(0)
+  createdAt  DateTime    @default(now())
+  workflow   Workflow    @relation(fields: [workflowId], references: [id], onDelete: Cascade)
+  nodeRuns   NodeRun[]
+
+  @@index([workflowId])
+  @@index([userId])
+}
+
+model NodeRun {
+  id            String      @id @default(cuid())
+  workflowRunId String
+  nodeId        String
+  nodeType      String
+  nodeLabel     String
+  status        NodeStatus  @default(RUNNING)
+  inputs        Json        @default("{}")
+  outputs       Json        @default("{}")
+  error         String?
+  durationMs    Int         @default(0)
+  createdAt     DateTime    @default(now())
+  workflowRun   WorkflowRun @relation(fields: [workflowRunId], references: [id], onDelete: Cascade)
+
+  @@index([workflowRunId])
+}
+
+enum RunScope {
+  FULL
+  PARTIAL
+  SINGLE
+}
+
+enum RunStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  PARTIAL
+}
+
+enum NodeStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  SKIPPED
+}
