@@ -32,7 +32,7 @@ export function getSampleWorkflow(): { nodes: WorkflowNode[]; edges: Edge[] } {
       id: "llm-1",
       type: "llmNode",
       position: { x: 680, y: 200 },
-      data: { type: "llmNode", label: "Product Description LLM", model: "gemini-2.0-flash", systemPrompt: "", userMessage: "", result: null, error: null },
+      data: { type: "llmNode", label: "Product Description LLM", model: "gemini-2.5-flash", systemPrompt: "", userMessage: "", result: null, error: null },
     },
 
     // Branch B
@@ -60,7 +60,7 @@ export function getSampleWorkflow(): { nodes: WorkflowNode[]; edges: Edge[] } {
       id: "llm-2",
       type: "llmNode",
       position: { x: 1020, y: 480 },
-      data: { type: "llmNode", label: "Marketing Tweet LLM", model: "gemini-2.0-flash", systemPrompt: "", userMessage: "", result: null, error: null },
+      data: { type: "llmNode", label: "Marketing Tweet LLM", model: "gemini-2.5-flash", systemPrompt: "", userMessage: "", result: null, error: null },
     },
   ]
 
