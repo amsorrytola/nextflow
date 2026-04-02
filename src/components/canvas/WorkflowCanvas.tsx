@@ -28,16 +28,13 @@ const nodeTypes: NodeTypes = {
   extractFrameNode: ExtractFrameNode,
 }
 
-// Handle id → data type mapping for type-safe connection validation
 const HANDLE_TYPES: Record<string, "text" | "image" | "video"> = {
-  // sources
   "textNode:output": "text",
   "uploadImageNode:output": "image",
   "uploadVideoNode:output": "video",
   "llmNode:output": "text",
   "cropImageNode:output": "image",
   "extractFrameNode:output": "image",
-  // targets
   "llmNode:system_prompt": "text",
   "llmNode:user_message": "text",
   "llmNode:images": "image",
@@ -60,21 +57,12 @@ export function WorkflowCanvas() {
   const isValidConnection: IsValidConnection = useCallback(
     (connection) => {
       const { source, sourceHandle, target, targetHandle } = connection
-
-      // No self-connections
       if (source === target) return false
-
-      // Get node types from node ids
       const sourceNode = nodes.find((n) => n.id === source)
       const targetNode = nodes.find((n) => n.id === target)
       if (!sourceNode || !targetNode) return false
-
-      const sourceKey = `${sourceNode.type}:${sourceHandle}`
-      const targetKey = `${targetNode.type}:${targetHandle}`
-
-      const sourceType = HANDLE_TYPES[sourceKey]
-      const targetType = HANDLE_TYPES[targetKey]
-
+      const sourceType = HANDLE_TYPES[`${sourceNode.type}:${sourceHandle}`]
+      const targetType = HANDLE_TYPES[`${targetNode.type}:${targetHandle}`]
       if (!sourceType || !targetType) return true
       return sourceType === targetType
     },
@@ -89,7 +77,7 @@ export function WorkflowCanvas() {
   )
 
   return (
-    <div className="flex-1 w-full h-full">
+    <div className="flex-1 w-full" style={{ height: "calc(100vh - 48px)" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
