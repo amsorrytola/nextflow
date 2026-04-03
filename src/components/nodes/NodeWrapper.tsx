@@ -1,6 +1,10 @@
 "use client"
 
+import { useState } from "react"
 import { cn } from "@/lib/utils"
+import { Play, Workflow } from "lucide-react"
+import { runWorkflowMode } from "@/lib/runWorkflowMode"
+import { useWorkflowStore } from "@/store/workflowStore"
 import type { NodeExecutionStatus } from "@/types"
 
 interface NodeWrapperProps {
@@ -11,6 +15,7 @@ interface NodeWrapperProps {
   icon?: React.ReactNode
   accentColor?: string
   titleColor?: string
+  nodeId?: string
 }
 
 export function NodeWrapper({
@@ -21,10 +26,13 @@ export function NodeWrapper({
   icon,
   accentColor = "#a855f7",
   titleColor,
+  nodeId,
 }: NodeWrapperProps) {
   const isRunning = status === "running"
   const isSuccess = status === "success"
   const isError = status === "error"
+  const setSelectedNodeIds = useWorkflowStore((state) => state.setSelectedNodeIds)
+  const [actionsVisible, setActionsVisible] = useState(false)
 
   const outlineColor = isRunning
     ? accentColor
@@ -44,7 +52,12 @@ export function NodeWrapper({
 
   return (
     // NOTE: NO `nodrag` class here — that was preventing node dragging!
-    <div className="flex flex-col" style={{ minWidth: 256, maxWidth: 320 }}>
+    <div
+      className="flex flex-col"
+      style={{ minWidth: 256, maxWidth: 320 }}
+      onMouseEnter={() => setActionsVisible(true)}
+      onMouseLeave={() => setActionsVisible(false)}
+    >
       {/* Title row — floats above card like Krea's design */}
       <div
         className="absolute flex items-center gap-1"
@@ -68,11 +81,11 @@ export function NodeWrapper({
           className
         )}
         style={{
-          background: "#1c1c1c",
+          background: "var(--bg-node)",
           border: `1px solid ${
             isRunning || isSuccess || isError
               ? outlineColor + "60"
-              : "rgba(255,255,255,0.07)"
+              : "var(--border)"
           }`,
           boxShadow:
             isRunning
@@ -81,13 +94,48 @@ export function NodeWrapper({
               ? `0 0 0 1px ${shadowColor}30, 0 0 12px ${shadowColor}20`
               : isError
               ? `0 0 0 1px ${shadowColor}40, 0 0 12px ${shadowColor}25`
-              : "0 2px 8px rgba(0,0,0,0.4)",
+              : "0 2px 8px color-mix(in srgb, var(--bg-primary) 60%, transparent)",
           outline: isRunning ? `2px solid ${outlineColor}` : "none",
           outlineOffset: 1,
           transition:
             "border-color 0.3s ease-out, box-shadow 0.3s ease-out, outline 0.3s ease-out",
         }}
       >
+        {nodeId && (
+          <div
+            className="absolute left-0 top-3 z-30 flex flex-col gap-2 transition-all duration-150"
+            style={{
+              transform: actionsVisible ? "translateX(-92px)" : "translateX(-84px)",
+              opacity: actionsVisible ? 1 : 0,
+              pointerEvents: actionsVisible ? "auto" : "none",
+            }}
+            onMouseEnter={() => setActionsVisible(true)}
+            onMouseLeave={() => setActionsVisible(false)}
+          >
+            <HoverAction
+              label="Run workflow"
+              icon={<Workflow size={12} fill="currentColor" />}
+              disabled={isRunning}
+              variant="primary"
+              onClick={(event) => {
+                event.stopPropagation()
+                void runWorkflowMode("FULL")
+              }}
+            />
+            <HoverAction
+              label="Run node"
+              icon={<Play size={12} fill="currentColor" />}
+              disabled={isRunning}
+              variant="secondary"
+              onClick={(event) => {
+                event.stopPropagation()
+                setSelectedNodeIds([nodeId])
+                void runWorkflowMode("SINGLE", [nodeId])
+              }}
+            />
+          </div>
+        )}
+
         {/* Running pulse ring */}
         {isRunning && (
           <div
@@ -109,5 +157,43 @@ export function NodeWrapper({
         }
       `}</style>
     </div>
+  )
+}
+
+function HoverAction({
+  label,
+  icon,
+  onClick,
+  disabled,
+  variant,
+}: {
+  label: string
+  icon: React.ReactNode
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void
+  disabled?: boolean
+  variant: "primary" | "secondary"
+}) {
+  return (
+    <button
+      type="button"
+      className={cn(
+        "nodrag flex items-center gap-2 rounded-[12px] pl-3 pr-3.5 py-2 text-[12px] font-medium shadow-lg transition-all whitespace-nowrap",
+        disabled ? "cursor-not-allowed opacity-60" : "hover:brightness-110"
+      )}
+      style={{
+        background: variant === "primary" ? "#1f7aff" : "#0d0d0d",
+        border: variant === "primary" ? "1px solid rgba(255,255,255,0.14)" : "1px solid rgba(255,255,255,0.08)",
+        color: "white",
+        boxShadow: variant === "primary"
+          ? "0 10px 24px rgba(31,122,255,0.26)"
+          : "0 10px 24px rgba(0,0,0,0.28)",
+        backdropFilter: "blur(12px)",
+      }}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {icon}
+      <span>{label}</span>
+    </button>
   )
 }

@@ -27,12 +27,12 @@ export function CropImageNode({ id, data }: NodeProps) {
   ]
 
   return (
-    <NodeWrapper title="Crop Image" icon={<Crop size={13} />} status={status} accentColor={BLUE}>
+    <NodeWrapper nodeId={id} title="Crop Image" icon={<Crop size={13} />} status={status} accentColor={BLUE}>
       {/* image input */}
       <div className="relative flex items-center h-7">
         <Handle type="target" position={Position.Left} id="image_url"
-          style={{ background: BLUE, width: 10, height: 10, border: "2px solid #1e1e1e", left: -18 }} />
-        <span className="text-[12px] text-[#555] ml-1">
+          style={{ background: BLUE, width: 10, height: 10, border: "2px solid var(--bg-node)", left: -18 }} />
+        <span className="text-[12px] ml-1" style={{ color: "var(--text-muted)" }}>
           image {isConnected("image_url") ? <span style={{ color: BLUE }}>● connected</span> : <span className="text-[#ef4444]">*</span>}
         </span>
       </div>
@@ -41,27 +41,30 @@ export function CropImageNode({ id, data }: NodeProps) {
       {params.map(p => (
         <div key={p.id} className="relative flex items-center gap-2">
           <Handle type="target" position={Position.Left} id={p.id}
-            style={{ background: GRAY, width: 7, height: 7, border: "2px solid #1e1e1e", left: -18 }} />
-          <span className="text-[11px] text-[#555] w-16 shrink-0">{p.label}</span>
+            style={{ background: GRAY, width: 7, height: 7, border: "2px solid var(--bg-node)", left: -18 }} />
+          <span className="text-[11px] w-16 shrink-0" style={{ color: "var(--text-muted)" }}>{p.label}</span>
           <input type="number" min={0} max={100}
             disabled={isConnected(p.id)}
             value={nodeData[p.key] as number}
             onChange={e => update(p.key, Number(e.target.value))}
             className={cn(
-              "flex-1 bg-[#2a2a2a] border border-[#333] rounded-lg px-2 py-1.5",
-              "text-[12px] text-[#ddd] outline-none text-right",
+              "flex-1 rounded-lg px-2 py-1.5 text-[12px] outline-none text-right",
               isConnected(p.id) && "opacity-40 cursor-not-allowed"
             )}
+            style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
           />
-          <span className="text-[11px] text-[#555]">%</span>
+          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>%</span>
         </div>
       ))}
 
       <button disabled={status === "running"}
         className={cn(
           "flex items-center justify-center gap-2 w-full py-2 rounded-lg text-[13px] font-medium transition-colors mt-1",
-          status === "running" ? "bg-[#2a2a2a] text-[#666] cursor-not-allowed" : "bg-[#4d9de0] hover:bg-[#3d8dd0] text-white"
-        )}>
+          status === "running" ? "cursor-not-allowed" : ""
+        )}
+        style={status === "running"
+          ? { background: "var(--bg-elevated)", color: "var(--text-muted)" }
+          : { background: BLUE, color: "white" }}>
         {status === "running" ? <><Loader2 size={13} className="animate-spin" /> Running...</> : <><Play size={13} /> Crop</>}
       </button>
 
@@ -72,7 +75,7 @@ export function CropImageNode({ id, data }: NodeProps) {
       {nodeData.error && <p className="text-[12px] text-[#ef4444]">{nodeData.error}</p>}
 
       <Handle type="source" position={Position.Right} id="output"
-        style={{ background: BLUE, width: 10, height: 10, border: "2px solid #1e1e1e", right: -18 }} />
+        style={{ background: BLUE, width: 10, height: 10, border: "2px solid var(--bg-node)", right: -18 }} />
     </NodeWrapper>
   )
 }

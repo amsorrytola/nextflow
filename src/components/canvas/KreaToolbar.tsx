@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useCallback } from "react"
+import { useRef } from "react"
 import {
   Plus, MousePointer2, Hand, Scissors, Link2,
   Undo2, Redo2, Download, Upload, Play, SquarePlay, Loader2, FlaskConical, Keyboard
@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { useWorkflowStore } from "@/store/workflowStore"
 import { useTemporalStore } from "@/hooks/useTemporalStore"
 import { getSampleWorkflow } from "@/lib/sampleWorkflow"
-import { executeWorkflow } from "@/lib/executionEngine"
+import { runWorkflowMode } from "@/lib/runWorkflowMode"
 import type { NodeType } from "@/types"
 import type { AnyNodeData } from "@/types"
 
@@ -28,9 +28,7 @@ function createDefaultData(type: NodeType): AnyNodeData {
 
 export function KreaToolbar() {
   const {
-    workflowName, setNodes, setEdges, selectedNodeIds,
-    nodes, edges, updateNodeData, setNodeExecutionStatus,
-    resetExecutionStatus, addRun, executionStatus,
+    workflowName, setNodes, setEdges, selectedNodeIds, executionStatus,
   } = useWorkflowStore()
   const { undo, redo, pastStates, futureStates } = useTemporalStore()
   const importRef = useRef<HTMLInputElement>(null)
@@ -38,45 +36,6 @@ export function KreaToolbar() {
   const isRunning = Object.values(executionStatus).some(s => s === "running")
   const canUndo = pastStates.length > 0
   const canRedo = futureStates.length > 0
-
-  const handleRun = useCallback(async (mode: "FULL" | "PARTIAL" | "SINGLE") => {
-    if (isRunning) return
-    resetExecutionStatus()
-    const startTime = Date.now()
-    const nodeRunRecords: Parameters<typeof addRun>[0]["nodeRuns"] = []
-
-    await executeWorkflow(nodes, edges, mode, selectedNodeIds,
-      (nodeId) => setNodeExecutionStatus(nodeId, "running"),
-      (nodeId, result) => {
-        setNodeExecutionStatus(nodeId, result.status === "success" ? "success" : "error")
-        const node = nodes.find(n => n.id === nodeId)
-        if (result.status === "success" && result.output !== null) {
-          if (node?.data.type === "llmNode") updateNodeData(nodeId, { result: result.output as string, error: null })
-          else if (node?.data.type === "cropImageNode") updateNodeData(nodeId, { result: result.output as string, error: null })
-          else if (node?.data.type === "extractFrameNode") updateNodeData(nodeId, { result: result.output as string, error: null })
-        } else if (result.status === "failed") {
-          updateNodeData(nodeId, { error: result.error })
-        }
-        nodeRunRecords.push({
-          nodeId, nodeType: node?.data.type ?? "unknown",
-          nodeLabel: (node?.data as { label?: string }).label ?? nodeId,
-          status: result.status === "success" ? "success" : "failed",
-          inputs: {}, outputs: result.output ? { result: result.output } : {},
-          error: result.error, durationMs: result.durationMs,
-        })
-      }
-    )
-
-    const totalDuration = Date.now() - startTime
-    const allSuccess = nodeRunRecords.every(n => n.status === "success")
-    const anySuccess = nodeRunRecords.some(n => n.status === "success")
-    addRun({
-      id: `run-${Date.now()}`,
-      runNumber: useWorkflowStore.getState().runs.length + 1,
-      scope: mode, status: allSuccess ? "SUCCESS" : anySuccess ? "PARTIAL" : "FAILED",
-      durationMs: totalDuration, createdAt: new Date(), nodeRuns: nodeRunRecords,
-    })
-  }, [isRunning, nodes, edges, selectedNodeIds, resetExecutionStatus, setNodeExecutionStatus, updateNodeData, addRun])
 
   const handleExport = () => {
     const { nodes, edges } = useWorkflowStore.getState()
@@ -104,36 +63,78 @@ export function KreaToolbar() {
   }
 
   return (
-    <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
-      {/* Run controls */}
-      <div className="flex items-center gap-1 px-1.5 py-1.5 rounded-2xl shadow-xl"
-        style={{ background: "rgba(30,30,30,0.95)", border: "0.5px solid rgba(255,255,255,0.1)", backdropFilter: "blur(12px)" }}>
+    <>
+      <div className="absolute bottom-6 left-12 z-20 flex items-center gap-2">
+        <div className="flex items-center gap-1 px-1 py-1 rounded-xl shadow-xl"
+          style={{ background: "rgba(34,34,34,0.94)", border: "1px solid rgba(255,255,255,0.05)", backdropFilter: "blur(16px)" }}>
+          <ToolBtn icon={Undo2} label="Undo" onClick={() => undo()} disabled={!canUndo} />
+          <ToolBtn icon={Redo2} label="Redo" onClick={() => redo()} disabled={!canRedo} />
+        </div>
+
         <button
-          onClick={() => handleRun("FULL")}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-medium shadow-xl"
+          style={{
+            minHeight: 28,
+            background: "rgba(34,34,34,0.94)",
+            border: "1px solid rgba(255,255,255,0.05)",
+            color: "rgba(255,255,255,0.72)",
+            backdropFilter: "blur(16px)",
+          }}
+        >
+          <Keyboard size={11} />
+          Keyboard shortcuts
+        </button>
+      </div>
+
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
+      {/* Run controls */}
+      <div className="flex items-center gap-1 px-1 py-1 rounded-[14px] shadow-xl"
+        style={{ background: "rgba(34,34,34,0.94)", border: "1px solid rgba(255,255,255,0.05)", backdropFilter: "blur(16px)" }}>
+        <button
+          onClick={() => runWorkflowMode("FULL")}
           disabled={isRunning}
           className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-medium transition-all",
-            isRunning
-              ? "text-[#a855f7] cursor-not-allowed"
-              : "bg-[#a855f7] hover:bg-[#9333ea] text-white"
-          )}>
-          {isRunning ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />}
+            "flex items-center gap-2 rounded-full pl-1 pr-3 py-1 text-[12px] font-medium transition-all",
+            isRunning ? "cursor-not-allowed" : "hover:brightness-110"
+          )}
+          style={{
+            minHeight: 28,
+            background: isRunning
+              ? "rgba(168,85,247,0.18)"
+              : "linear-gradient(180deg, #b05cff 0%, #8f3dff 100%)",
+            color: "white",
+            boxShadow: isRunning
+              ? "0 6px 16px rgba(168,85,247,0.18)"
+              : "0 8px 22px rgba(143,61,255,0.34), inset 0 1px 0 rgba(255,255,255,0.14)",
+          }}
+        >
+          <span
+            className="flex items-center justify-center rounded-full shrink-0"
+            style={{
+              width: 22,
+              height: 22,
+              background: "rgba(255,255,255,0.14)",
+              boxShadow: "inset 0 1px 0 rgba(255,255,255,0.12)",
+            }}
+          >
+            {isRunning ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} fill="currentColor" />}
+          </span>
           {isRunning ? "Running..." : "Run"}
         </button>
         {selectedNodeIds.length > 0 && (
           <button
             disabled={isRunning}
-            onClick={() => handleRun(selectedNodeIds.length === 1 ? "SINGLE" : "PARTIAL")}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[13px] text-white/50 hover:text-white/80 hover:bg-white/[0.06] transition-colors">
-            <SquarePlay size={13} />
+            onClick={() => runWorkflowMode(selectedNodeIds.length === 1 ? "SINGLE" : "PARTIAL")}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[11px] text-[12px] text-white/50 hover:text-white/80 hover:bg-white/[0.06] transition-colors">
+            <SquarePlay size={12} />
             {selectedNodeIds.length > 0 ? `(${selectedNodeIds.length})` : "Selected"}
           </button>
         )}
       </div>
 
       {/* Main tools — matches Krea's 4-icon toolbar */}
-      <div className="flex items-center gap-0.5 px-1.5 py-1.5 rounded-2xl shadow-xl"
-        style={{ background: "rgba(30,30,30,0.95)", border: "0.5px solid rgba(255,255,255,0.1)", backdropFilter: "blur(12px)" }}>
+      <div className="flex items-center gap-0.5 px-1 py-1 rounded-[14px] shadow-xl"
+        style={{ background: "rgba(34,34,34,0.94)", border: "1px solid rgba(255,255,255,0.05)", backdropFilter: "blur(16px)" }}>
         <ToolBtn icon={Plus} label="Add node" />
         <ToolBtn icon={MousePointer2} label="Select (V)" />
         <ToolBtn icon={Hand} label="Pan (H)" />
@@ -142,10 +143,8 @@ export function KreaToolbar() {
       </div>
 
       {/* History + IO */}
-      <div className="flex items-center gap-0.5 px-1.5 py-1.5 rounded-2xl shadow-xl"
-        style={{ background: "rgba(30,30,30,0.95)", border: "0.5px solid rgba(255,255,255,0.1)", backdropFilter: "blur(12px)" }}>
-        <ToolBtn icon={Undo2} label="Undo" onClick={() => undo()} disabled={!canUndo} />
-        <ToolBtn icon={Redo2} label="Redo" onClick={() => redo()} disabled={!canRedo} />
+      <div className="flex items-center gap-0.5 px-1 py-1 rounded-[14px] shadow-xl"
+        style={{ background: "rgba(34,34,34,0.94)", border: "1px solid rgba(255,255,255,0.05)", backdropFilter: "blur(16px)" }}>
         <div className="w-px h-4 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
         <ToolBtn icon={Download} label="Export JSON" onClick={handleExport} />
         <ToolBtn icon={Upload} label="Import JSON" onClick={() => importRef.current?.click()} />
@@ -154,14 +153,8 @@ export function KreaToolbar() {
         }} />
         <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
       </div>
-
-      {/* Keyboard shortcuts */}
-      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl shadow-xl"
-        style={{ background: "rgba(30,30,30,0.95)", border: "0.5px solid rgba(255,255,255,0.1)", backdropFilter: "blur(12px)" }}>
-        <Keyboard size={13} className="text-white/30" />
-        <span className="text-[12px] text-white/30">Shortcuts</span>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -174,12 +167,12 @@ function ToolBtn({ icon: Icon, label, onClick, disabled }: {
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        "w-8 h-8 flex items-center justify-center rounded-lg transition-colors",
+        "w-8 h-8 flex items-center justify-center rounded-[10px] transition-colors",
         disabled
           ? "text-white/15 cursor-not-allowed"
           : "text-white/50 hover:text-white/90 hover:bg-white/[0.08]"
       )}>
-      <Icon size={15} />
+      <Icon size={14} />
     </button>
   )
 }

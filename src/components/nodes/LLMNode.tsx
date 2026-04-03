@@ -22,7 +22,7 @@ const handle = (color: string) => ({
   background: color,
   width: 9,
   height: 9,
-  border: "2px solid #1c1c1c",
+  border: "2px solid var(--bg-node)",
   boxShadow: `0 0 0 3px ${color}25`,
 })
 
@@ -36,17 +36,17 @@ export function LLMNode({ id, data }: NodeProps) {
 
   const inputRowStyle: React.CSSProperties = {
     fontSize: 11,
-    color: "rgba(255,255,255,0.35)",
+    color: "var(--text-ghost)",
     marginBottom: 2,
   }
 
   const fieldStyle = (disabled: boolean): React.CSSProperties => ({
     width: "100%",
-    background: disabled ? "rgba(255,255,255,0.02)" : "rgba(255,255,255,0.05)",
-    border: "0.5px solid rgba(255,255,255,0.08)",
+    background: disabled ? "color-mix(in srgb, var(--bg-elevated) 65%, transparent)" : "var(--bg-elevated)",
+    border: "0.5px solid var(--border)",
     borderRadius: 6,
     padding: "6px 10px",
-    color: disabled ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.75)",
+    color: disabled ? "var(--text-ghost)" : "var(--text-soft)",
     fontSize: 12,
     fontFamily: "inherit",
     outline: "none",
@@ -56,6 +56,7 @@ export function LLMNode({ id, data }: NodeProps) {
 
   return (
     <NodeWrapper
+      nodeId={id}
       title="Hailuo 2.3"
       icon={<Bot size={12} />}
       status={status}
@@ -73,14 +74,13 @@ export function LLMNode({ id, data }: NodeProps) {
           appearance: "none",
           cursor: "pointer",
           paddingRight: 28,
-          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.3)' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
           backgroundRepeat: "no-repeat",
           backgroundPosition: "right 8px center",
           backgroundSize: "12px",
         }}
       >
         {MODELS.map((m) => (
-          <option key={m} value={m} style={{ background: "#1c1c1c" }}>
+          <option key={m} value={m} style={{ background: "var(--bg-secondary)", color: "var(--text-primary)" }}>
             {m}
           </option>
         ))}
@@ -163,9 +163,9 @@ export function LLMNode({ id, data }: NodeProps) {
         <div
           style={{
             fontSize: 11,
-            color: "rgba(255,255,255,0.2)",
-            background: "rgba(255,255,255,0.04)",
-            border: "0.5px solid rgba(255,255,255,0.08)",
+            color: "var(--text-ghost)",
+            background: "var(--bg-elevated)",
+            border: "0.5px solid var(--border)",
             borderRadius: 4,
             padding: "2px 8px",
           }}
@@ -195,7 +195,7 @@ export function LLMNode({ id, data }: NodeProps) {
         className="nodrag flex items-center gap-1 w-full text-left"
         style={{
           fontSize: 11,
-          color: "rgba(255,255,255,0.3)",
+          color: "var(--text-ghost)",
           padding: "2px 0",
           background: "none",
           border: "none",
@@ -214,9 +214,9 @@ export function LLMNode({ id, data }: NodeProps) {
           style={{
             marginTop: 4,
             padding: "10px 12px",
-            background: "rgba(255,255,255,0.03)",
+            background: "var(--bg-elevated)",
             borderRadius: 8,
-            border: "0.5px solid rgba(255,255,255,0.08)",
+            border: "0.5px solid var(--border)",
           }}
         >
           <div
@@ -234,7 +234,7 @@ export function LLMNode({ id, data }: NodeProps) {
           <p
             style={{
               fontSize: 11,
-              color: "rgba(255,255,255,0.6)",
+              color: "var(--text-secondary)",
               lineHeight: 1.6,
               whiteSpace: "pre-wrap",
               maxHeight: 120,

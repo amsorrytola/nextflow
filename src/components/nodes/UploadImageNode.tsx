@@ -13,7 +13,7 @@ const handleStyle = {
   background: BLUE,
   width: 9,
   height: 9,
-  border: "2px solid #1c1c1c",
+  border: "2px solid var(--bg-node)",
   boxShadow: `0 0 0 3px ${BLUE}25`,
 }
 
@@ -35,6 +35,7 @@ export function UploadImageNode({ id, data }: NodeProps) {
 
   return (
     <NodeWrapper
+      nodeId={id}
       title="Image"
       icon={<ImageIcon size={12} />}
       status={status}
@@ -113,25 +114,25 @@ export function UploadImageNode({ id, data }: NodeProps) {
               gap: 8,
               padding: "20px 8px",
               borderRadius: 8,
-              background: "rgba(255,255,255,0.04)",
-              border: "0.5px solid rgba(255,255,255,0.08)",
+              background: "var(--bg-elevated)",
+              border: "0.5px solid var(--border)",
               cursor: uploading ? "not-allowed" : "pointer",
               opacity: uploading ? 0.5 : 1,
               transition: "background 0.15s",
             }}
             onMouseEnter={(e) =>
-              !uploading && ((e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.07)")
+              !uploading && ((e.currentTarget as HTMLElement).style.background = "var(--bg-elevated-hover)")
             }
             onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)")
+              ((e.currentTarget as HTMLElement).style.background = "var(--bg-elevated)")
             }
           >
             {uploading ? (
-              <Loader2 size={18} color="rgba(255,255,255,0.3)" style={{ animation: "spin 1s linear infinite" }} />
+              <Loader2 size={18} color="var(--text-ghost)" style={{ animation: "spin 1s linear infinite" }} />
             ) : (
-              <Upload size={18} color="rgba(255,255,255,0.3)" />
+              <Upload size={18} color="var(--text-ghost)" />
             )}
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>
+            <span style={{ fontSize: 11, color: "var(--text-ghost)" }}>
               {uploading ? `${progress}%` : "Upload"}
             </span>
             <input
@@ -156,20 +157,20 @@ export function UploadImageNode({ id, data }: NodeProps) {
               gap: 8,
               padding: "20px 8px",
               borderRadius: 8,
-              background: "rgba(255,255,255,0.04)",
-              border: "0.5px solid rgba(255,255,255,0.08)",
+              background: "var(--bg-elevated)",
+              border: "0.5px solid var(--border)",
               cursor: "pointer",
               transition: "background 0.15s",
             }}
             onMouseEnter={(e) =>
-              ((e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.07)")
+              ((e.currentTarget as HTMLElement).style.background = "var(--bg-elevated-hover)")
             }
             onMouseLeave={(e) =>
-              ((e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)")
+              ((e.currentTarget as HTMLElement).style.background = "var(--bg-elevated)")
             }
           >
-            <Film size={18} color="rgba(255,255,255,0.3)" />
-            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>
+            <Film size={18} color="var(--text-ghost)" />
+            <span style={{ fontSize: 11, color: "var(--text-ghost)" }}>
               Select asset
             </span>
           </button>
@@ -180,7 +181,7 @@ export function UploadImageNode({ id, data }: NodeProps) {
         <span
           style={{
             fontSize: 10,
-            color: "rgba(255,255,255,0.3)",
+            color: "var(--text-ghost)",
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",

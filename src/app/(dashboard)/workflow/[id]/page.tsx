@@ -10,9 +10,12 @@ import { KreaTopBar } from "@/components/canvas/KreaTopBar"
 import { useWorkflowStore } from "@/store/workflowStore"
 import { getSampleWorkflow } from "@/lib/sampleWorkflow"
 
+export type RightPanelView = "assets" | "history" | null
+
 export default function WorkflowPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const [mounted, setMounted] = useState(false)
+  const [rightPanel, setRightPanel] = useState<RightPanelView>(null)
   const { setNodes, setEdges, setWorkflowId, setWorkflowName } = useWorkflowStore()
 
   useEffect(() => { setMounted(true) }, [])
@@ -49,21 +52,21 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
 
   if (!mounted) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center" style={{ background: "#0e0e0e" }}>
-        <div className="text-white/20 text-sm">Loading...</div>
+      <div className="flex h-screen w-screen items-center justify-center" style={{ background: "var(--bg-primary)" }}>
+        <div className="text-sm" style={{ color: "var(--text-ghost)" }}>Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden" style={{ background: "#0e0e0e" }}>
+    <div className="flex h-screen w-screen overflow-hidden" style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}>
       <KreaLeftSidebar />
       <div className="flex flex-col flex-1 min-w-0 relative">
-        <KreaTopBar workflowId={id} />
+        <KreaTopBar workflowId={id} rightPanel={rightPanel} onRightPanelChange={setRightPanel} />
         <WorkflowCanvas />
         <KreaToolbar />
       </div>
-      <RightSidebar />
+      <RightSidebar panel={rightPanel} onClose={() => setRightPanel(null)} />
     </div>
   )
 }

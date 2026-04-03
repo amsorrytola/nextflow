@@ -15,6 +15,7 @@ export function TextNode({ id, data }: NodeProps) {
 
   return (
     <NodeWrapper
+      nodeId={id}
       title="Prompt"
       icon={<TextCursor size={12} />}
       status={status}
@@ -22,7 +23,7 @@ export function TextNode({ id, data }: NodeProps) {
       titleColor={YELLOW}
     >
       {/* Input / Output label row */}
-      <div className="flex items-center justify-between text-[11px] relative" style={{ color: "rgba(255,255,255,0.3)" }}>
+      <div className="flex items-center justify-between text-[11px] relative" style={{ color: "var(--text-ghost)" }}>
         <div className="flex items-center gap-1.5">
           <Handle
             type="target"
@@ -32,7 +33,7 @@ export function TextNode({ id, data }: NodeProps) {
               background: YELLOW,
               width: 9,
               height: 9,
-              border: "2px solid #1c1c1c",
+              border: "2px solid var(--bg-node)",
               left: -20,
               boxShadow: `0 0 0 3px ${YELLOW}25`,
             }}
@@ -49,7 +50,7 @@ export function TextNode({ id, data }: NodeProps) {
               background: YELLOW,
               width: 9,
               height: 9,
-              border: "2px solid #1c1c1c",
+              border: "2px solid var(--bg-node)",
               right: -20,
               boxShadow: `0 0 0 3px ${YELLOW}25`,
             }}
@@ -68,11 +69,11 @@ export function TextNode({ id, data }: NodeProps) {
         className="nowheel nodrag"
         style={{
           width: "100%",
-          background: "rgba(255,255,255,0.04)",
-          border: "0.5px solid rgba(255,255,255,0.08)",
+          background: "var(--bg-elevated)",
+          border: "0.5px solid var(--border)",
           borderRadius: 6,
           padding: "8px 10px",
-          color: "rgba(255,255,255,0.75)",
+          color: "var(--text-soft)",
           fontSize: 12,
           fontFamily: "inherit",
           resize: "none",
