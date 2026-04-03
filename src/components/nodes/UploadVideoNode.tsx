@@ -1,12 +1,14 @@
 "use client"
 
 import { Handle, Position, type NodeProps } from "@xyflow/react"
-import { Video, Upload, Loader2, X } from "lucide-react"
+import { Video, Upload, Film, Loader2, X } from "lucide-react"
 import { NodeWrapper } from "./NodeWrapper"
 import { useWorkflowStore } from "@/store/workflowStore"
 import { useTransloaditUpload } from "@/hooks/useTransloaditUpload"
 import type { UploadVideoNodeData } from "@/types"
 import { cn } from "@/lib/utils"
+
+const GREEN = "#4CAF50"
 
 export function UploadVideoNode({ id, data }: NodeProps) {
   const nodeData = data as UploadVideoNodeData
@@ -16,78 +18,56 @@ export function UploadVideoNode({ id, data }: NodeProps) {
   const { upload, uploading, progress } = useTransloaditUpload({
     templateId: process.env.NEXT_PUBLIC_TRANSLOADIT_VIDEO_TEMPLATE_ID!,
     accept: ".mp4,.mov,.webm,.m4v",
-    onSuccess: (result) => {
-      updateNodeData(id, {
-        videoUrl: result.url,
-        fileName: result.name,
-      } as Partial<UploadVideoNodeData>)
-    },
+    onSuccess: (result) => updateNodeData(id, { videoUrl: result.url, fileName: result.name } as Partial<UploadVideoNodeData>),
     onError: (err) => alert(err),
   })
 
   return (
-    <NodeWrapper title="Upload Video" icon={<Video size={12} />} status={status} color="#f59e0b">
+    <NodeWrapper title="Video" icon={<Video size={13} />} status={status}
+      accentColor={GREEN} titleColor={GREEN}>
+      <Handle type="source" position={Position.Right} id="output"
+        style={{ background: GREEN, width: 10, height: 10, border: "2px solid #1e1e1e", right: -18 }} />
+      <Handle type="target" position={Position.Left} id="input"
+        style={{ background: GREEN, width: 10, height: 10, border: "2px solid #1e1e1e", left: -18 }} />
+
       {nodeData.videoUrl ? (
         <div className="relative group">
-          <video
-            src={nodeData.videoUrl}
-            controls
-            className="w-full h-32 rounded-md border border-[#2a2a2a] bg-black"
-          />
+          <video src={nodeData.videoUrl} controls
+            className="w-full h-40 rounded-xl border border-[#2a2a2a] bg-black" />
           <button
             onClick={() => updateNodeData(id, { videoUrl: null, fileName: null } as Partial<UploadVideoNodeData>)}
-            className="absolute top-1 right-1 p-0.5 bg-[#1a1a1a] text-[#9ca3af] rounded
-              opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <X size={10} />
+            className="absolute top-2 right-2 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center
+              opacity-0 group-hover:opacity-100 transition-opacity">
+            <X size={12} className="text-white" />
           </button>
-          <div className="text-[10px] text-[#6b7280] mt-1 truncate">{nodeData.fileName}</div>
         </div>
       ) : (
-        <label className={cn(
-          "flex flex-col items-center gap-1.5 py-4 border border-dashed border-[#2a2a2a]",
-          "rounded-md transition-colors",
-          uploading ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:border-[#f59e0b]"
-        )}>
-          {uploading ? (
-            <>
-              <Loader2 size={16} className="text-[#f59e0b] animate-spin" />
-              <span className="text-[10px] text-[#6b7280]">Uploading {progress}%</span>
-              <div className="w-full px-3">
-                <div className="h-1 bg-[#2a2a2a] rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#f59e0b] rounded-full transition-all"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <Upload size={16} className="text-[#6b7280]" />
-              <span className="text-[10px] text-[#6b7280]">mp4, mov, webm, m4v</span>
-            </>
-          )}
-          <input
-            type="file"
-            accept=".mp4,.mov,.webm,.m4v"
-            className="hidden"
-            disabled={uploading}
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) upload(file)
-              e.target.value = ""
-            }}
-          />
-        </label>
+        <div className="grid grid-cols-2 gap-2">
+          <label className={cn(
+            "flex flex-col items-center gap-2 py-5 rounded-xl bg-[#252525] cursor-pointer",
+            "hover:bg-[#2a2a2a] transition-colors border border-transparent hover:border-[#333]",
+            uploading && "opacity-50 cursor-not-allowed"
+          )}>
+            {uploading
+              ? <Loader2 size={18} className="text-[#555] animate-spin" />
+              : <Upload size={18} className="text-[#555]" />}
+            <span className="text-[11px] text-[#555]">
+              {uploading ? `${progress}%` : "Upload"}
+            </span>
+            <input type="file" accept=".mp4,.mov,.webm,.m4v" className="hidden"
+              disabled={uploading}
+              onChange={e => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = "" }} />
+          </label>
+          <button className="flex flex-col items-center gap-2 py-5 rounded-xl bg-[#252525]
+            hover:bg-[#2a2a2a] transition-colors border border-transparent hover:border-[#333]">
+            <Film size={18} className="text-[#555]" />
+            <span className="text-[11px] text-[#555]">Select asset</span>
+          </button>
+        </div>
       )}
-
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="output"
-        style={{ background: "#f59e0b", width: 8, height: 8, border: "2px solid #1a1a1a" }}
-      />
+      {nodeData.fileName && (
+        <span className="text-[10px] text-[#555] truncate px-1">{nodeData.fileName}</span>
+      )}
     </NodeWrapper>
   )
 }

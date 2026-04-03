@@ -6,29 +6,42 @@ import { NodeWrapper } from "./NodeWrapper"
 import { useWorkflowStore } from "@/store/workflowStore"
 import type { TextNodeData } from "@/types"
 
+const YELLOW = "#f5a623"
+
 export function TextNode({ id, data }: NodeProps) {
   const nodeData = data as TextNodeData
   const { updateNodeData, executionStatus } = useWorkflowStore()
   const status = executionStatus[id] ?? "idle"
 
   return (
-    <NodeWrapper title="Text" icon={<Type size={12} />} status={status} color="#6366f1">
+    <NodeWrapper title="Prompt" icon={<Type size={13} />} status={status}
+      accentColor={YELLOW} titleColor={YELLOW}>
+      {/* Input handle row */}
+      <div className="flex items-center justify-between text-xs text-[#666] relative">
+        <div className="flex items-center gap-1.5">
+          <Handle type="target" position={Position.Left} id="input"
+            style={{ background: YELLOW, width: 10, height: 10, border: "2px solid #1e1e1e", left: -18 }} />
+          <span>Input</span>
+        </div>
+        <span>Output</span>
+        <Handle type="source" position={Position.Right} id="output"
+          style={{ background: YELLOW, width: 10, height: 10, border: "2px solid #1e1e1e", right: -18 }} />
+      </div>
+
+      {/* Action icons */}
+      <div className="flex items-center justify-between opacity-40">
+        <span className="text-[#999] text-xs">✏</span>
+        <span className="text-[#999] text-xs">⧉</span>
+      </div>
+
+      {/* Textarea */}
       <textarea
         value={nodeData.text}
-        onChange={(e) =>
-          updateNodeData(id, { text: e.target.value } as Partial<TextNodeData>)
-        }
-        placeholder="Enter text..."
-        rows={3}
-        className="w-full bg-[#111111] border border-[#2a2a2a] rounded-md px-2 py-1.5
-          text-xs text-white placeholder:text-[#6b7280] resize-none outline-none
-          focus:border-[#6366f1] transition-colors"
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="output"
-        style={{ background: "#6366f1", width: 8, height: 8, border: "2px solid #1a1a1a" }}
+        onChange={e => updateNodeData(id, { text: e.target.value } as Partial<TextNodeData>)}
+        placeholder="Write something..."
+        rows={5}
+        className="w-full bg-transparent text-[13px] text-[#ddd] placeholder:text-[#444]
+          resize-none outline-none leading-relaxed"
       />
     </NodeWrapper>
   )

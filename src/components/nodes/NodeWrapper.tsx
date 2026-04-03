@@ -8,8 +8,9 @@ interface NodeWrapperProps {
   status?: NodeExecutionStatus
   className?: string
   title: string
-  icon: React.ReactNode
-  color?: string
+  icon?: React.ReactNode
+  accentColor?: string
+  titleColor?: string
 }
 
 export function NodeWrapper({
@@ -18,30 +19,52 @@ export function NodeWrapper({
   className,
   title,
   icon,
-  color = "#a855f7",
+  accentColor = "#a855f7",
+  titleColor,
 }: NodeWrapperProps) {
+  const glowColor = status === "running" ? accentColor
+    : status === "success" ? "#4CAF50"
+    : status === "error" ? "#ef4444"
+    : "transparent"
+
+  const borderColor = status === "running" ? accentColor
+    : status === "success" ? "#4CAF5066"
+    : status === "error" ? "#ef444466"
+    : "transparent"
+
   return (
-    <div
-      className={cn(
-        "rounded-xl border bg-[#1a1a1a] min-w-[240px] max-w-[280px]",
-        "transition-all duration-200",
-        status === "idle" && "border-[#2a2a2a]",
-        status === "running" && "border-[#a855f7] shadow-[0_0_20px_rgba(168,85,247,0.4)] animate-pulse",
-        status === "success" && "border-[#22c55e] shadow-[0_0_12px_rgba(34,197,94,0.2)]",
-        status === "error" && "border-[#ef4444] shadow-[0_0_12px_rgba(239,68,68,0.2)]",
-        className
-      )}
-    >
-      {/* Header */}
-      <div
-        className="flex items-center gap-2 px-3 py-2 border-b border-[#2a2a2a] rounded-t-xl"
-        style={{ borderTopColor: color, borderTopWidth: 2 }}
-      >
-        <span style={{ color }}>{icon}</span>
-        <span className="text-xs font-semibold text-white">{title}</span>
+    <div className="flex flex-col nodrag" style={{ minWidth: 260, maxWidth: 320 }}>
+      {/* Title row — above card, Krea style */}
+      <div className="flex items-center gap-1.5 mb-1.5 px-0.5">
+        {icon && (
+          <span style={{ color: titleColor ?? accentColor }}>
+            {icon}
+          </span>
+        )}
+        <span className="text-[13px] font-normal" style={{ color: titleColor ?? "#aaa" }}>
+          {title}
+        </span>
       </div>
-      {/* Body */}
-      <div className="p-3 flex flex-col gap-2">{children}</div>
+
+      {/* Card */}
+      <div
+        className={cn(
+          "rounded-2xl bg-[#1e1e1e] relative overflow-visible",
+          "transition-all duration-200",
+          status === "running" && "animate-pulse",
+          className
+        )}
+        style={{
+          border: `1px solid ${borderColor}`,
+          boxShadow: status !== "idle"
+            ? `0 0 0 1px ${borderColor}, 0 0 16px ${glowColor}44`
+            : "none",
+        }}
+      >
+        <div className="p-3 flex flex-col gap-2.5">
+          {children}
+        </div>
+      </div>
     </div>
   )
 }

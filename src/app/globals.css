@@ -1,31 +1,64 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --sidebar-bg: #111111;
-  --canvas-bg: #0d0d0d;
-  --node-bg: #1a1a1a;
-  --node-border: #2a2a2a;
+  --bg-primary: #141414;
+  --bg-secondary: #1c1c1c;
+  --bg-node: #242424;
+  --bg-node-hover: #2a2a2a;
+  --bg-sidebar: #1a1a1a;
+  --border: #2e2e2e;
+  --border-subtle: #222222;
+  --text-primary: #e8e8e8;
+  --text-secondary: #8a8a8a;
+  --text-muted: #555555;
+  --handle-blue: #4d9de0;
+  --handle-green: #4CAF50;
+  --handle-yellow: #f5a623;
+  --handle-purple: #a855f7;
   --accent: #a855f7;
-  --accent-hover: #9333ea;
-  --text-muted: #6b7280;
-  --text-secondary: #9ca3af;
-  --success: #22c55e;
-  --error: #ef4444;
-  --warning: #f59e0b;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
-.react-flow__background {
-  background-color: var(--canvas-bg);
+/* React Flow overrides */
+.react-flow__background { background: var(--bg-primary) !important; }
+.react-flow__controls {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+  overflow: hidden;
 }
+.react-flow__controls-button {
+  background: var(--bg-secondary) !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text-secondary) !important;
+  fill: var(--text-secondary) !important;
+}
+.react-flow__controls-button:hover {
+  background: var(--bg-node) !important;
+}
+.react-flow__minimap {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 8px !important;
+}
+.react-flow__edge-path { stroke: #555 !important; }
+.react-flow__edge.selected .react-flow__edge-path,
+.react-flow__edge:hover .react-flow__edge-path { stroke: var(--accent) !important; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #444; }
+
+/* Node selection ring */
+.react-flow__node.selected > div { outline: 1px solid var(--accent) !important; outline-offset: 2px; }
