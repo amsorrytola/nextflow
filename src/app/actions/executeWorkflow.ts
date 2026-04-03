@@ -48,25 +48,21 @@ export async function executeNode(payload: NodePayload): Promise<ExecuteResult> 
     } else if (payload.nodeType === "uploadVideoNode") {
       output = d["videoUrl"] ?? null
     } else if (payload.nodeType === "llmNode") {
-      // Collect image URLs — filter nulls
       const rawImages = inputs["images"]
       const imageUrls: string[] = Array.isArray(rawImages)
         ? rawImages.filter((u): u is string => typeof u === "string" && u.length > 0)
         : typeof rawImages === "string" && rawImages.length > 0 ? [rawImages] : []
 
-      // user_message: prefer connected input, fall back to node's own field
-      const userMessage = (
+      const userMessage =
         typeof inputs["user_message"] === "string" ? inputs["user_message"] :
         typeof d["userMessage"] === "string" ? d["userMessage"] : ""
-      )
 
-      const systemPrompt = (
+      const systemPrompt =
         typeof inputs["system_prompt"] === "string" ? inputs["system_prompt"] :
         typeof d["systemPrompt"] === "string" ? d["systemPrompt"] : ""
-      )
 
       const handle = await tasks.trigger("llm-task", {
-        model: (d["model"] as string) ?? "gemini-2.0-flash",
+        model: (d["model"] as string) ?? "gemini-2.5-flash",
         systemPrompt,
         userMessage,
         imageUrls,
@@ -76,7 +72,10 @@ export async function executeNode(payload: NodePayload): Promise<ExecuteResult> 
       else throw new Error(result.error ?? "LLM task failed")
 
     } else if (payload.nodeType === "cropImageNode") {
-      const imageUrl = typeof inputs["image_url"] === "string" ? inputs["image_url"] : ""
+      // Accept both image_url (from handle) and outputImage (from upload node)
+      const imageUrl =
+        typeof inputs["image_url"] === "string" ? inputs["image_url"] :
+        typeof inputs["outputImage"] === "string" ? inputs["outputImage"] : ""
       if (!imageUrl) throw new Error("No image URL connected to crop node")
 
       const handle = await tasks.trigger("crop-image-task", {
@@ -94,7 +93,10 @@ export async function executeNode(payload: NodePayload): Promise<ExecuteResult> 
       else throw new Error(result.error ?? "Crop task failed")
 
     } else if (payload.nodeType === "extractFrameNode") {
-      const videoUrl = typeof inputs["video_url"] === "string" ? inputs["video_url"] : ""
+      // Accept both video_url and outputVideo
+      const videoUrl =
+        typeof inputs["video_url"] === "string" ? inputs["video_url"] :
+        typeof inputs["outputVideo"] === "string" ? inputs["outputVideo"] : ""
       if (!videoUrl) throw new Error("No video URL connected to extract frame node")
 
       const handle = await tasks.trigger("extract-frame-task", {
@@ -109,7 +111,6 @@ export async function executeNode(payload: NodePayload): Promise<ExecuteResult> 
       else throw new Error(result.error ?? "Extract frame task failed")
     }
 
-    await new Promise((r) => setTimeout(r, 100))
     return { nodeId: payload.nodeId, status: "success", output, error: null, durationMs: Date.now() - start }
   } catch (err) {
     return {
