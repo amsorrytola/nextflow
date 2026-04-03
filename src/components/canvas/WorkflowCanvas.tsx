@@ -11,9 +11,7 @@ import {
   type IsValidConnection,
   type Edge,
   type EdgeTypes,
-  BaseEdge,
   getSmoothStepPath,
-  useReactFlow,
   type EdgeProps,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
@@ -36,8 +34,11 @@ const nodeTypes: NodeTypes = {
 
 // Handle type → data type mapping
 const HANDLE_TYPES: Record<string, "text" | "image" | "video"> = {
+  "textNode:outputText": "text",
   "textNode:output": "text",
+  "uploadImageNode:outputImage": "image",
   "uploadImageNode:output": "image",
+  "uploadVideoNode:outputVideo": "video",
   "uploadVideoNode:output": "video",
   "llmNode:output": "text",
   "cropImageNode:output": "image",
@@ -54,15 +55,14 @@ const HANDLE_TYPES: Record<string, "text" | "image" | "video"> = {
   "extractFrameNode:timestamp": "text",
 }
 
-// Colors matching Krea's handle system from the video:
-// text/prompt → yellow/gold, image → blue, video → green
+// Krea color system — solid, vivid
 const DATA_TYPE_COLORS: Record<string, string> = {
-  text: "#FCC800",   // Krea yellow (prompt/text handles)
-  image: "#0080FF",  // Krea blue (image handles)
-  video: "#29D246",  // Krea green (video handles)
+  text: "#FCC800",   // yellow
+  image: "#0080FF",  // blue
+  video: "#29D246",  // green
 }
 
-// Custom animated edge with glow — matches Krea's video exactly
+// Krea-style edge: solid smooth path with animated dot when active
 function KreaEdge({
   id,
   sourceX,
@@ -85,69 +85,52 @@ function KreaEdge({
     targetX,
     targetY,
     targetPosition,
-    borderRadius: 12,
+    borderRadius: 16,
   })
 
-  const strokeWidth = isActive ? 2 : 1.5
-  const opacity = isActive ? 1 : isDone ? 0.9 : 0.5
+  const opacity = isActive ? 1 : isDone ? 0.85 : selected ? 0.9 : 0.55
 
   return (
     <>
-      {/* Glow layer — blurred wide stroke underneath */}
-      {(isActive || isDone || selected) && (
+      {/* Glow layer — only when active or selected */}
+      {(isActive || selected) && (
         <path
           d={edgePath}
           fill="none"
           stroke={color}
-          strokeWidth={isActive ? 8 : 5}
-          opacity={isActive ? 0.25 : 0.12}
-          style={{ filter: `blur(${isActive ? 6 : 3}px)`, pointerEvents: "none" }}
+          strokeWidth={isActive ? 10 : 6}
+          opacity={isActive ? 0.2 : 0.1}
+          style={{
+            filter: `blur(${isActive ? 8 : 4}px)`,
+            pointerEvents: "none",
+          }}
         />
       )}
 
-      {/* Main edge path */}
+      {/* Main solid edge — NO strokeDasharray, fully solid */}
       <path
         d={edgePath}
         fill="none"
         stroke={color}
-        strokeWidth={strokeWidth}
+        strokeWidth={isActive ? 2 : 1.5}
         opacity={opacity}
+        strokeLinecap="round"
+        strokeLinejoin="round"
         style={{
-          filter: isActive ? `drop-shadow(0 0 3px ${color}cc)` : "none",
-          transition: "opacity 0.3s ease, stroke-width 0.3s ease",
+          filter: isActive ? `drop-shadow(0 0 4px ${color}bb)` : "none",
+          transition: "opacity 0.3s ease, stroke-width 0.2s ease",
           pointerEvents: "none",
         }}
       />
 
-      {/* Animated flow dot — moves along the edge when active */}
+      {/* Animated traveling dot when running — the only "animation" element */}
       {isActive && (
-        <circle r="3" fill={color} opacity={0.9}>
-          <animateMotion dur="1.2s" repeatCount="indefinite" path={edgePath} />
+        <circle r="3.5" fill={color} opacity={0.95}>
+          <animateMotion dur="1s" repeatCount="indefinite" path={edgePath} />
         </circle>
       )}
 
-      {/* Dash animation overlay for active state */}
-      {isActive && (
-        <path
-          d={edgePath}
-          fill="none"
-          stroke={color}
-          strokeWidth={strokeWidth}
-          strokeDasharray="6 8"
-          opacity={0.6}
-          style={{ pointerEvents: "none" }}
-        >
-          <animate
-            attributeName="stroke-dashoffset"
-            from="0"
-            to="-28"
-            dur="0.6s"
-            repeatCount="indefinite"
-          />
-        </path>
-      )}
-
-      {/* Interaction area (invisible, wider for click target) */}
+      {/* Wide invisible hit area for click/hover */}
       <path
         d={edgePath}
         fill="none"
@@ -196,7 +179,7 @@ export function WorkflowCanvas() {
     [setSelectedNodeIds]
   )
 
-  // Build styled edges with Krea color system
+  // Inject color + execution state into each edge's data
   const styledEdges: Edge[] = edges.map((edge) => {
     const sourceNode = nodes.find((n) => n.id === edge.source)
     const handleKey = `${sourceNode?.type}:${edge.sourceHandle}`
@@ -205,14 +188,17 @@ export function WorkflowCanvas() {
 
     const sourceStatus = executionStatus[edge.source ?? ""]
     const targetStatus = executionStatus[edge.target ?? ""]
-    const isActive =
-      sourceStatus === "running" || targetStatus === "running"
+    const isActive = sourceStatus === "running" || targetStatus === "running"
     const isDone = sourceStatus === "success"
 
     return {
       ...edge,
       type: "kreaEdge",
+      // Clear any animated/style from old data that could cause dashes
+      animated: false,
+      style: undefined,
       data: {
+        ...(edge.data ?? {}),
         color,
         isActive,
         isDone,
@@ -223,7 +209,25 @@ export function WorkflowCanvas() {
   return (
     <>
       <style>{`
-        /* Override ReactFlow defaults for Krea look */
+        /* Remove ALL ReactFlow default edge dashing */
+        .react-flow__edge path {
+          stroke-dasharray: none !important;
+          animation: none !important;
+        }
+        .react-flow__edge.animated path {
+          stroke-dasharray: none !important;
+          animation: none !important;
+        }
+
+        /* Connection line while dragging — keep it clean */
+        .react-flow__connection-path {
+          stroke: rgba(255,255,255,0.5) !important;
+          stroke-width: 1.5px !important;
+          stroke-dasharray: none !important;
+          animation: none !important;
+        }
+
+        /* Handle hover */
         .react-flow__handle {
           transition: width 0.15s ease, height 0.15s ease, opacity 0.15s ease !important;
         }
@@ -231,22 +235,7 @@ export function WorkflowCanvas() {
           width: 14px !important;
           height: 14px !important;
         }
-        .react-flow__node {
-          /* Remove ReactFlow's default selection border - we handle it in NodeWrapper */
-        }
-        .react-flow__node.selected > div {
-          outline: none !important;
-        }
-        /* Connection line style while dragging */
-        .react-flow__connection-path {
-          stroke: rgba(255,255,255,0.4) !important;
-          stroke-width: 1.5px !important;
-          stroke-dasharray: 5 5 !important;
-        }
-        /* Minimap node colors */
-        .react-flow__minimap-node {
-          rx: 4px;
-        }
+
         /* Background dot color */
         .react-flow__background pattern circle {
           fill: #282828 !important;
@@ -273,8 +262,8 @@ export function WorkflowCanvas() {
           maxZoom={2}
           defaultEdgeOptions={{
             type: "kreaEdge",
+            animated: false,
           }}
-          // CRITICAL: these must NOT be set to false for dragging to work
           nodesDraggable={true}
           nodesConnectable={true}
           elementsSelectable={true}

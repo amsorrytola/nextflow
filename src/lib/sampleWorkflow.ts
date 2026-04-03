@@ -64,21 +64,22 @@ export function getSampleWorkflow(): { nodes: WorkflowNode[]; edges: Edge[] } {
     },
   ]
 
+  // No animated, no style override — KreaEdge handles all coloring/animation
   const edges: Edge[] = [
     // Branch A connections
-    { id: "e1", source: "upload-image-1", sourceHandle: "output", target: "crop-image-1", targetHandle: "image_url", animated: true, style: { stroke: "#a855f7" } },
-    { id: "e2", source: "crop-image-1", sourceHandle: "output", target: "llm-1", targetHandle: "images", animated: true, style: { stroke: "#a855f7" } },
-    { id: "e3", source: "text-system-1", sourceHandle: "output", target: "llm-1", targetHandle: "system_prompt", animated: true, style: { stroke: "#a855f7" } },
-    { id: "e4", source: "text-user-1", sourceHandle: "output", target: "llm-1", targetHandle: "user_message", animated: true, style: { stroke: "#a855f7" } },
+    { id: "e1", source: "upload-image-1", sourceHandle: "output", target: "crop-image-1", targetHandle: "image_url", type: "kreaEdge" },
+    { id: "e2", source: "crop-image-1", sourceHandle: "output", target: "llm-1", targetHandle: "images", type: "kreaEdge" },
+    { id: "e3", source: "text-system-1", sourceHandle: "output", target: "llm-1", targetHandle: "system_prompt", type: "kreaEdge" },
+    { id: "e4", source: "text-user-1", sourceHandle: "output", target: "llm-1", targetHandle: "user_message", type: "kreaEdge" },
 
     // Branch B connections
-    { id: "e5", source: "upload-video-1", sourceHandle: "output", target: "extract-frame-1", targetHandle: "video_url", animated: true, style: { stroke: "#a855f7" } },
+    { id: "e5", source: "upload-video-1", sourceHandle: "output", target: "extract-frame-1", targetHandle: "video_url", type: "kreaEdge" },
 
     // Convergence connections
-    { id: "e6", source: "llm-1", sourceHandle: "output", target: "llm-2", targetHandle: "user_message", animated: true, style: { stroke: "#a855f7" } },
-    { id: "e7", source: "crop-image-1", sourceHandle: "output", target: "llm-2", targetHandle: "images", animated: true, style: { stroke: "#a855f7" } },
-    { id: "e8", source: "extract-frame-1", sourceHandle: "output", target: "llm-2", targetHandle: "images", animated: true, style: { stroke: "#a855f7" } },
-    { id: "e9", source: "text-system-2", sourceHandle: "output", target: "llm-2", targetHandle: "system_prompt", animated: true, style: { stroke: "#a855f7" } },
+    { id: "e6", source: "llm-1", sourceHandle: "output", target: "llm-2", targetHandle: "user_message", type: "kreaEdge" },
+    { id: "e7", source: "crop-image-1", sourceHandle: "output", target: "llm-2", targetHandle: "images", type: "kreaEdge" },
+    { id: "e8", source: "extract-frame-1", sourceHandle: "output", target: "llm-2", targetHandle: "images", type: "kreaEdge" },
+    { id: "e9", source: "text-system-2", sourceHandle: "output", target: "llm-2", targetHandle: "system_prompt", type: "kreaEdge" },
   ]
 
   return { nodes, edges }

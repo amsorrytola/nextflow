@@ -69,12 +69,26 @@ body {
   height: 13px !important;
 }
 
-/* Connection line while dragging */
+/* ─── CRITICAL: Kill ALL edge dashing globally ─── */
+/* ReactFlow's animated edge class adds a CSS dash animation — we kill it here */
+.react-flow__edge path,
+.react-flow__edge-path {
+  stroke-dasharray: none !important;
+  stroke-dashoffset: 0 !important;
+  animation: none !important;
+}
+.react-flow__edge.animated path,
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: none !important;
+  animation: none !important;
+}
+
+/* Connection line while dragging — solid, clean */
 .react-flow__connection-path {
-  stroke: rgba(255,255,255,0.35) !important;
+  stroke: rgba(255,255,255,0.4) !important;
   stroke-width: 1.5px !important;
-  stroke-dasharray: 5 6 !important;
-  animation: dash-flow 0.5s linear infinite !important;
+  stroke-dasharray: none !important;
+  animation: none !important;
 }
 
 /* Edge selection */
@@ -119,11 +133,6 @@ body {
 }
 
 /* ─── Animations ─── */
-
-@keyframes dash-flow {
-  from { stroke-dashoffset: 0; }
-  to   { stroke-dashoffset: -22; }
-}
 
 @keyframes spin {
   from { transform: rotate(0deg); }

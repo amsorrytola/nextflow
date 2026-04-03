@@ -69,10 +69,11 @@ export const useWorkflowStore = create<WorkflowState>()(
           edges: applyEdgeChanges(changes, state.edges),
         })),
 
+      // No animated:true, no style override — let KreaEdge handle all styling
       onConnect: (connection) =>
         set((state) => ({
           edges: addEdge(
-            { ...connection, animated: true, style: { stroke: "#a855f7" } },
+            { ...connection, type: "kreaEdge" },
             state.edges
           ),
         })),
