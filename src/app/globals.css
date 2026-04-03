@@ -1,19 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --bg-primary: #141414;
-  --bg-secondary: #1c1c1c;
-  --bg-node: #242424;
-  --bg-node-hover: #2a2a2a;
-  --bg-sidebar: #1a1a1a;
-  --border: #2e2e2e;
-  --border-subtle: #222222;
+  --bg-primary: #101010;
+  --bg-secondary: #1a1a1a;
+  --bg-node: #1c1c1c;
+  --bg-sidebar: #141414;
+  --border: rgba(255,255,255,0.07);
   --text-primary: #e8e8e8;
   --text-secondary: #8a8a8a;
-  --text-muted: #555555;
-  --handle-blue: #4d9de0;
-  --handle-green: #4CAF50;
-  --handle-yellow: #f5a623;
+  --text-muted: #444444;
+  /* Krea exact handle/edge colors */
+  --handle-blue: #0080FF;
+  --handle-green: #29D246;
+  --handle-yellow: #FCC800;
   --handle-purple: #a855f7;
   --accent: #a855f7;
 }
@@ -28,37 +27,111 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* React Flow overrides */
-.react-flow__background { background: var(--bg-primary) !important; }
+/* ─── React Flow Core Overrides ─── */
+
+/* Canvas background */
+.react-flow {
+  background: #101010 !important;
+}
+
+.react-flow__background {
+  background: #101010 !important;
+}
+
+/* Remove default white node box-shadow/border */
+.react-flow__node {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+/* CRITICAL: remove selected node's default purple ring (we handle it ourselves) */
+.react-flow__node.selected > * {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.react-flow__node:focus {
+  outline: none !important;
+}
+.react-flow__node:focus-visible {
+  outline: none !important;
+}
+
+/* Handles */
+.react-flow__handle {
+  border-radius: 50% !important;
+  transition: width 0.15s ease, height 0.15s ease !important;
+  cursor: crosshair !important;
+}
+.react-flow__handle:hover {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+/* Connection line while dragging */
+.react-flow__connection-path {
+  stroke: rgba(255,255,255,0.35) !important;
+  stroke-width: 1.5px !important;
+  stroke-dasharray: 5 6 !important;
+  animation: dash-flow 0.5s linear infinite !important;
+}
+
+/* Edge selection */
+.react-flow__edge.selected path {
+  opacity: 1 !important;
+}
+
+/* Controls panel */
 .react-flow__controls {
-  background: var(--bg-secondary) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
+  background: #1a1a1a !important;
+  border: 0.5px solid rgba(255,255,255,0.08) !important;
+  border-radius: 10px !important;
   overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
 }
 .react-flow__controls-button {
-  background: var(--bg-secondary) !important;
-  border-bottom: 1px solid var(--border) !important;
-  color: var(--text-secondary) !important;
-  fill: var(--text-secondary) !important;
+  background: #1a1a1a !important;
+  border-bottom: 0.5px solid rgba(255,255,255,0.06) !important;
+  color: rgba(255,255,255,0.4) !important;
+  fill: rgba(255,255,255,0.4) !important;
 }
 .react-flow__controls-button:hover {
-  background: var(--bg-node) !important;
+  background: rgba(255,255,255,0.06) !important;
+  fill: rgba(255,255,255,0.8) !important;
 }
-.react-flow__minimap {
-  background: var(--bg-secondary) !important;
-  border: 1px solid var(--border) !important;
-  border-radius: 8px !important;
-}
-.react-flow__edge-path { stroke: #555 !important; }
-.react-flow__edge.selected .react-flow__edge-path,
-.react-flow__edge:hover .react-flow__edge-path { stroke: var(--accent) !important; }
 
-/* Scrollbar */
+/* Minimap */
+.react-flow__minimap {
+  background: #161616 !important;
+  border: 0.5px solid rgba(255,255,255,0.08) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+.react-flow__minimap-svg {
+  background: #161616 !important;
+}
+
+/* Selection box */
+.react-flow__selection {
+  background: rgba(168,85,247,0.06) !important;
+  border: 1px solid rgba(168,85,247,0.4) !important;
+}
+
+/* ─── Animations ─── */
+
+@keyframes dash-flow {
+  from { stroke-dashoffset: 0; }
+  to   { stroke-dashoffset: -22; }
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ─── Scrollbars ─── */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #333; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #444; }
-
-/* Node selection ring */
-.react-flow__node.selected > div { outline: 1px solid var(--accent) !important; outline-offset: 2px; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.18); }

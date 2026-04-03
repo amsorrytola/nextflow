@@ -22,49 +22,92 @@ export function NodeWrapper({
   accentColor = "#a855f7",
   titleColor,
 }: NodeWrapperProps) {
-  const glowColor = status === "running" ? accentColor
-    : status === "success" ? "#4CAF50"
-    : status === "error" ? "#ef4444"
+  const isRunning = status === "running"
+  const isSuccess = status === "success"
+  const isError = status === "error"
+
+  const outlineColor = isRunning
+    ? accentColor
+    : isSuccess
+    ? "#4CAF50"
+    : isError
+    ? "#ef4444"
     : "transparent"
 
-  const borderColor = status === "running" ? accentColor
-    : status === "success" ? "#4CAF5066"
-    : status === "error" ? "#ef444466"
+  const shadowColor = isRunning
+    ? accentColor
+    : isSuccess
+    ? "#4CAF50"
+    : isError
+    ? "#ef4444"
     : "transparent"
 
   return (
-    <div className="flex flex-col nodrag" style={{ minWidth: 260, maxWidth: 320 }}>
-      {/* Title row — above card, Krea style */}
-      <div className="flex items-center gap-1.5 mb-1.5 px-0.5">
+    // NOTE: NO `nodrag` class here — that was preventing node dragging!
+    <div className="flex flex-col" style={{ minWidth: 256, maxWidth: 320 }}>
+      {/* Title row — floats above card like Krea's design */}
+      <div
+        className="absolute flex items-center gap-1"
+        style={{ top: -20, left: 4 }}
+      >
         {icon && (
-          <span style={{ color: titleColor ?? accentColor }}>
-            {icon}
-          </span>
+          <span style={{ color: titleColor ?? accentColor }}>{icon}</span>
         )}
-        <span className="text-[13px] font-normal" style={{ color: titleColor ?? "#aaa" }}>
+        <span
+          className="text-[12px] font-normal truncate max-w-[160px]"
+          style={{ color: titleColor ?? accentColor }}
+        >
           {title}
         </span>
       </div>
 
-      {/* Card */}
+      {/* Card body — matches Krea's dark card with subtle border */}
       <div
         className={cn(
-          "rounded-2xl bg-[#1e1e1e] relative overflow-visible",
-          "transition-all duration-200",
-          status === "running" && "animate-pulse",
+          "rounded-[12px] relative overflow-visible transition-all duration-300",
           className
         )}
         style={{
-          border: `1px solid ${borderColor}`,
-          boxShadow: status !== "idle"
-            ? `0 0 0 1px ${borderColor}, 0 0 16px ${glowColor}44`
-            : "none",
+          background: "#1c1c1c",
+          border: `1px solid ${
+            isRunning || isSuccess || isError
+              ? outlineColor + "60"
+              : "rgba(255,255,255,0.07)"
+          }`,
+          boxShadow:
+            isRunning
+              ? `0 0 0 1px ${shadowColor}40, 0 0 20px ${shadowColor}30, 0 0 40px ${shadowColor}15`
+              : isSuccess
+              ? `0 0 0 1px ${shadowColor}30, 0 0 12px ${shadowColor}20`
+              : isError
+              ? `0 0 0 1px ${shadowColor}40, 0 0 12px ${shadowColor}25`
+              : "0 2px 8px rgba(0,0,0,0.4)",
+          outline: isRunning ? `2px solid ${outlineColor}` : "none",
+          outlineOffset: 1,
+          transition:
+            "border-color 0.3s ease-out, box-shadow 0.3s ease-out, outline 0.3s ease-out",
         }}
       >
-        <div className="p-3 flex flex-col gap-2.5">
-          {children}
-        </div>
+        {/* Running pulse ring */}
+        {isRunning && (
+          <div
+            className="absolute inset-0 rounded-[12px] pointer-events-none"
+            style={{
+              animation: "krea-pulse-ring 1.5s ease-out infinite",
+              border: `1px solid ${accentColor}`,
+            }}
+          />
+        )}
+
+        <div className="p-3 flex flex-col gap-2.5">{children}</div>
       </div>
+
+      <style>{`
+        @keyframes krea-pulse-ring {
+          0%   { opacity: 0.8; transform: scale(1); }
+          100% { opacity: 0;   transform: scale(1.04); }
+        }
+      `}</style>
     </div>
   )
 }

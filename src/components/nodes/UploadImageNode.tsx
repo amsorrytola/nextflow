@@ -1,14 +1,21 @@
 "use client"
 
 import { Handle, Position, type NodeProps } from "@xyflow/react"
-import { Image as ImageIcon, Upload, Loader2, X } from "lucide-react"
+import { Image as ImageIcon, Upload, Film, Loader2, X } from "lucide-react"
 import { NodeWrapper } from "./NodeWrapper"
 import { useWorkflowStore } from "@/store/workflowStore"
 import { useTransloaditUpload } from "@/hooks/useTransloaditUpload"
 import type { UploadImageNodeData } from "@/types"
-import { cn } from "@/lib/utils"
 
-const BLUE = "#4d9de0"
+const BLUE = "#0080FF"
+
+const handleStyle = {
+  background: BLUE,
+  width: 9,
+  height: 9,
+  border: "2px solid #1c1c1c",
+  boxShadow: `0 0 0 3px ${BLUE}25`,
+}
 
 export function UploadImageNode({ id, data }: NodeProps) {
   const nodeData = data as UploadImageNodeData
@@ -18,56 +25,170 @@ export function UploadImageNode({ id, data }: NodeProps) {
   const { upload, uploading, progress } = useTransloaditUpload({
     templateId: process.env.NEXT_PUBLIC_TRANSLOADIT_IMAGE_TEMPLATE_ID!,
     accept: ".jpg,.jpeg,.png,.webp,.gif",
-    onSuccess: (result) => updateNodeData(id, { imageUrl: result.url, fileName: result.name } as Partial<UploadImageNodeData>),
+    onSuccess: (result) =>
+      updateNodeData(id, {
+        imageUrl: result.url,
+        fileName: result.name,
+      } as Partial<UploadImageNodeData>),
     onError: (err) => alert(err),
   })
 
   return (
-    <NodeWrapper title="Image" icon={<ImageIcon size={13} />} status={status}
-      accentColor={BLUE} titleColor={BLUE}>
-      <Handle type="source" position={Position.Right} id="output"
-        style={{ background: BLUE, width: 10, height: 10, border: "2px solid #1e1e1e", right: -18 }} />
-      <Handle type="target" position={Position.Left} id="input"
-        style={{ background: BLUE, width: 10, height: 10, border: "2px solid #1e1e1e", left: -18 }} />
+    <NodeWrapper
+      title="Image"
+      icon={<ImageIcon size={12} />}
+      status={status}
+      accentColor={BLUE}
+      titleColor={BLUE}
+    >
+      {/* Handles */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="outputImage"
+        style={{ ...handleStyle, right: -20, top: "40%" }}
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="image"
+        style={{ ...handleStyle, left: -20, top: "40%" }}
+      />
 
       {nodeData.imageUrl ? (
-        <div className="relative group">
+        <div className="relative group nodrag">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={nodeData.imageUrl} alt="uploaded"
-            className="w-full h-40 object-cover rounded-xl border border-[#2a2a2a]" />
+          <img
+            src={nodeData.imageUrl}
+            alt="uploaded"
+            draggable={false}
+            style={{
+              width: "100%",
+              height: 160,
+              objectFit: "cover",
+              borderRadius: 8,
+              display: "block",
+            }}
+          />
           <button
-            onClick={() => updateNodeData(id, { imageUrl: null, fileName: null } as Partial<UploadImageNodeData>)}
-            className="absolute top-2 right-2 w-6 h-6 bg-black/60 rounded-full flex items-center justify-center
-              opacity-0 group-hover:opacity-100 transition-opacity">
-            <X size={12} className="text-white" />
+            className="nodrag"
+            onClick={() =>
+              updateNodeData(id, {
+                imageUrl: null,
+                fileName: null,
+              } as Partial<UploadImageNodeData>)
+            }
+            style={{
+              position: "absolute",
+              top: 6,
+              left: 6,
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              background: "rgba(0,0,0,0.7)",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: 0,
+              transition: "opacity 0.15s",
+            }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0")}
+          >
+            <X size={11} color="white" />
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-2">
-          <label className={cn(
-            "flex flex-col items-center gap-2 py-5 rounded-xl bg-[#252525] cursor-pointer",
-            "hover:bg-[#2a2a2a] transition-colors border border-transparent hover:border-[#333]",
-            uploading && "opacity-50 cursor-not-allowed"
-          )}>
-            {uploading
-              ? <Loader2 size={18} className="text-[#555] animate-spin" />
-              : <Upload size={18} className="text-[#555]" />}
-            <span className="text-[11px] text-[#555]">
+        <div
+          className="nodrag"
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}
+        >
+          <label
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              padding: "20px 8px",
+              borderRadius: 8,
+              background: "rgba(255,255,255,0.04)",
+              border: "0.5px solid rgba(255,255,255,0.08)",
+              cursor: uploading ? "not-allowed" : "pointer",
+              opacity: uploading ? 0.5 : 1,
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) =>
+              !uploading && ((e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.07)")
+            }
+            onMouseLeave={(e) =>
+              ((e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)")
+            }
+          >
+            {uploading ? (
+              <Loader2 size={18} color="rgba(255,255,255,0.3)" style={{ animation: "spin 1s linear infinite" }} />
+            ) : (
+              <Upload size={18} color="rgba(255,255,255,0.3)" />
+            )}
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>
               {uploading ? `${progress}%` : "Upload"}
             </span>
-            <input type="file" accept=".jpg,.jpeg,.png,.webp,.gif" className="hidden"
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,.gif"
+              style={{ display: "none" }}
               disabled={uploading}
-              onChange={e => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = "" }} />
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) upload(f)
+                e.target.value = ""
+              }}
+            />
           </label>
-          <button className="flex flex-col items-center gap-2 py-5 rounded-xl bg-[#252525]
-            hover:bg-[#2a2a2a] transition-colors border border-transparent hover:border-[#333]">
-            <ImageIcon size={18} className="text-[#555]" />
-            <span className="text-[11px] text-[#555]">Select asset</span>
+
+          <button
+            className="nodrag"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              padding: "20px 8px",
+              borderRadius: 8,
+              background: "rgba(255,255,255,0.04)",
+              border: "0.5px solid rgba(255,255,255,0.08)",
+              cursor: "pointer",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) =>
+              ((e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.07)")
+            }
+            onMouseLeave={(e) =>
+              ((e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)")
+            }
+          >
+            <Film size={18} color="rgba(255,255,255,0.3)" />
+            <span style={{ fontSize: 11, color: "rgba(255,255,255,0.3)" }}>
+              Select asset
+            </span>
           </button>
         </div>
       )}
+
       {nodeData.fileName && (
-        <span className="text-[10px] text-[#555] truncate px-1">{nodeData.fileName}</span>
+        <span
+          style={{
+            fontSize: 10,
+            color: "rgba(255,255,255,0.3)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            padding: "0 2px",
+          }}
+        >
+          {nodeData.fileName}
+        </span>
       )}
     </NodeWrapper>
   )
