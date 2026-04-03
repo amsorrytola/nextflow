@@ -2,8 +2,8 @@
 
 import { useRef, useCallback } from "react"
 import {
-  Plus, MousePointer, Hand, Scissors, Share2,
-  Undo2, Redo2, Download, Upload, Play, SquarePlay, Loader2, FlaskConical
+  Plus, MousePointer2, Hand, Scissors, Link2,
+  Undo2, Redo2, Download, Upload, Play, SquarePlay, Loader2, FlaskConical, Keyboard
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useWorkflowStore } from "@/store/workflowStore"
@@ -106,41 +106,47 @@ export function KreaToolbar() {
   return (
     <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
       {/* Run controls */}
-      <div className="flex items-center gap-1 bg-[#1e1e1e] border border-[#2e2e2e] rounded-xl px-2 py-1.5 shadow-xl">
-        <button onClick={() => handleRun("FULL")} disabled={isRunning}
-          className={cn(
-            "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-            isRunning ? "bg-[#7c3aed]/40 text-[#a855f7] cursor-not-allowed" : "bg-[#a855f7] hover:bg-[#9333ea] text-white"
-          )}>
-          {isRunning ? <Loader2 size={12} className="animate-spin" /> : <Play size={12} />}
-          Run
-        </button>
+      <div className="flex items-center gap-1 px-1.5 py-1.5 rounded-2xl shadow-xl"
+        style={{ background: "rgba(30,30,30,0.95)", border: "0.5px solid rgba(255,255,255,0.1)", backdropFilter: "blur(12px)" }}>
         <button
-          disabled={selectedNodeIds.length === 0 || isRunning}
-          onClick={() => handleRun(selectedNodeIds.length === 1 ? "SINGLE" : "PARTIAL")}
+          onClick={() => handleRun("FULL")}
+          disabled={isRunning}
           className={cn(
-            "flex items-center gap-1.5 px-2 py-1.5 rounded-lg text-xs transition-colors",
-            selectedNodeIds.length > 0 && !isRunning ? "text-[#999] hover:bg-[#2a2a2a]" : "text-[#444] cursor-not-allowed"
+            "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[13px] font-medium transition-all",
+            isRunning
+              ? "text-[#a855f7] cursor-not-allowed"
+              : "bg-[#a855f7] hover:bg-[#9333ea] text-white"
           )}>
-          <SquarePlay size={12} />
-          {selectedNodeIds.length > 0 ? `(${selectedNodeIds.length})` : "Selected"}
+          {isRunning ? <Loader2 size={13} className="animate-spin" /> : <Play size={13} />}
+          {isRunning ? "Running..." : "Run"}
         </button>
+        {selectedNodeIds.length > 0 && (
+          <button
+            disabled={isRunning}
+            onClick={() => handleRun(selectedNodeIds.length === 1 ? "SINGLE" : "PARTIAL")}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[13px] text-white/50 hover:text-white/80 hover:bg-white/[0.06] transition-colors">
+            <SquarePlay size={13} />
+            {selectedNodeIds.length > 0 ? `(${selectedNodeIds.length})` : "Selected"}
+          </button>
+        )}
       </div>
 
-      {/* Main tools */}
-      <div className="flex items-center bg-[#1e1e1e] border border-[#2e2e2e] rounded-xl px-2 py-1.5 shadow-xl gap-0.5">
-        <ToolBtn icon={Plus} label="Add node" onClick={() => {}} />
-        <ToolBtn icon={MousePointer} label="Select" />
-        <ToolBtn icon={Hand} label="Pan" />
+      {/* Main tools — matches Krea's 4-icon toolbar */}
+      <div className="flex items-center gap-0.5 px-1.5 py-1.5 rounded-2xl shadow-xl"
+        style={{ background: "rgba(30,30,30,0.95)", border: "0.5px solid rgba(255,255,255,0.1)", backdropFilter: "blur(12px)" }}>
+        <ToolBtn icon={Plus} label="Add node" />
+        <ToolBtn icon={MousePointer2} label="Select (V)" />
+        <ToolBtn icon={Hand} label="Pan (H)" />
         <ToolBtn icon={Scissors} label="Cut" />
-        <ToolBtn icon={Share2} label="Connect" />
+        <ToolBtn icon={Link2} label="Connect" />
       </div>
 
       {/* History + IO */}
-      <div className="flex items-center bg-[#1e1e1e] border border-[#2e2e2e] rounded-xl px-2 py-1.5 shadow-xl gap-0.5">
+      <div className="flex items-center gap-0.5 px-1.5 py-1.5 rounded-2xl shadow-xl"
+        style={{ background: "rgba(30,30,30,0.95)", border: "0.5px solid rgba(255,255,255,0.1)", backdropFilter: "blur(12px)" }}>
         <ToolBtn icon={Undo2} label="Undo" onClick={() => undo()} disabled={!canUndo} />
         <ToolBtn icon={Redo2} label="Redo" onClick={() => redo()} disabled={!canRedo} />
-        <div className="w-px h-4 bg-[#2e2e2e] mx-1" />
+        <div className="w-px h-4 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
         <ToolBtn icon={Download} label="Export JSON" onClick={handleExport} />
         <ToolBtn icon={Upload} label="Import JSON" onClick={() => importRef.current?.click()} />
         <ToolBtn icon={FlaskConical} label="Load Sample" onClick={() => {
@@ -149,9 +155,11 @@ export function KreaToolbar() {
         <input ref={importRef} type="file" accept=".json" className="hidden" onChange={handleImport} />
       </div>
 
-      {/* Keyboard shortcuts hint */}
-      <div className="bg-[#1e1e1e] border border-[#2e2e2e] rounded-xl px-3 py-1.5 shadow-xl">
-        <span className="text-[11px] text-[#555]">⌨ Shortcuts</span>
+      {/* Keyboard shortcuts */}
+      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl shadow-xl"
+        style={{ background: "rgba(30,30,30,0.95)", border: "0.5px solid rgba(255,255,255,0.1)", backdropFilter: "blur(12px)" }}>
+        <Keyboard size={13} className="text-white/30" />
+        <span className="text-[12px] text-white/30">Shortcuts</span>
       </div>
     </div>
   )
@@ -161,10 +169,15 @@ function ToolBtn({ icon: Icon, label, onClick, disabled }: {
   icon: React.ElementType; label: string; onClick?: () => void; disabled?: boolean
 }) {
   return (
-    <button title={label} onClick={onClick} disabled={disabled}
+    <button
+      title={label}
+      onClick={onClick}
+      disabled={disabled}
       className={cn(
         "w-8 h-8 flex items-center justify-center rounded-lg transition-colors",
-        disabled ? "text-[#333] cursor-not-allowed" : "text-[#666] hover:text-[#aaa] hover:bg-[#2a2a2a]"
+        disabled
+          ? "text-white/15 cursor-not-allowed"
+          : "text-white/50 hover:text-white/90 hover:bg-white/[0.08]"
       )}>
       <Icon size={15} />
     </button>

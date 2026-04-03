@@ -8,6 +8,7 @@ import { RightSidebar } from "@/components/sidebar/RightSidebar"
 import { KreaToolbar } from "@/components/canvas/KreaToolbar"
 import { KreaTopBar } from "@/components/canvas/KreaTopBar"
 import { useWorkflowStore } from "@/store/workflowStore"
+import { getSampleWorkflow } from "@/lib/sampleWorkflow"
 
 export default function WorkflowPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
@@ -17,11 +18,22 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
   useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
+    // "sample" → load the built-in sample workflow
+    if (id === "sample") {
+      setWorkflowId("sample")
+      setWorkflowName("SampleWorkflow")
+      const { nodes, edges } = getSampleWorkflow()
+      setNodes(nodes)
+      setEdges(edges)
+      return
+    }
+
     if (id === "default" || id === "new") {
       setWorkflowId(id)
       return
     }
-    // Load workflow from DB
+
+    // Load from DB
     fetch(`/api/workflows/${id}`)
       .then(r => r.json())
       .then(data => {
@@ -37,14 +49,14 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
 
   if (!mounted) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-[#141414]">
-        <div className="text-[#555] text-sm">Loading...</div>
+      <div className="flex h-screen w-screen items-center justify-center" style={{ background: "#0e0e0e" }}>
+        <div className="text-white/20 text-sm">Loading...</div>
       </div>
     )
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#141414]">
+    <div className="flex h-screen w-screen overflow-hidden" style={{ background: "#0e0e0e" }}>
       <KreaLeftSidebar />
       <div className="flex flex-col flex-1 min-w-0 relative">
         <KreaTopBar workflowId={id} />
