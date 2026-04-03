@@ -1,31 +1,176 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  --sidebar-bg: #111111;
-  --canvas-bg: #0d0d0d;
-  --node-bg: #1a1a1a;
-  --node-border: #2a2a2a;
+  --bg-primary: #101010;
+  --bg-secondary: #1a1a1a;
+  --bg-node: #1c1c1c;
+  --bg-sidebar: #141414;
+  --bg-elevated: rgba(255,255,255,0.06);
+  --bg-elevated-hover: rgba(255,255,255,0.08);
+  --border: rgba(255,255,255,0.07);
+  --border-strong: rgba(255,255,255,0.1);
+  --text-primary: #e8e8e8;
+  --text-secondary: #8a8a8a;
+  --text-muted: #444444;
+  --text-soft: rgba(255,255,255,0.7);
+  --text-faint: rgba(255,255,255,0.4);
+  --text-ghost: rgba(255,255,255,0.25);
+  --panel-backdrop: rgba(16,16,16,0.98);
+  --selection-bg: rgba(168,85,247,0.06);
+  --selection-border: rgba(168,85,247,0.4);
+  /* Krea exact handle/edge colors */
+  --handle-blue: #0080FF;
+  --handle-green: #29D246;
+  --handle-yellow: #FCC800;
+  --handle-purple: #a855f7;
   --accent: #a855f7;
-  --accent-hover: #9333ea;
-  --text-muted: #6b7280;
-  --text-secondary: #9ca3af;
-  --success: #22c55e;
-  --error: #ef4444;
-  --warning: #f59e0b;
 }
 
-* {
-  box-sizing: border-box;
+[data-theme="light"] {
+  --bg-primary: #f5f5f2;
+  --bg-secondary: #ffffff;
+  --bg-node: #ffffff;
+  --bg-sidebar: #faf9f7;
+  --bg-elevated: rgba(17,24,39,0.05);
+  --bg-elevated-hover: rgba(17,24,39,0.08);
+  --border: rgba(17,24,39,0.1);
+  --border-strong: rgba(17,24,39,0.14);
+  --text-primary: #111827;
+  --text-secondary: #374151;
+  --text-muted: #6b7280;
+  --text-soft: rgba(17,24,39,0.76);
+  --text-faint: rgba(17,24,39,0.5);
+  --text-ghost: rgba(17,24,39,0.34);
+  --panel-backdrop: rgba(250,249,247,0.96);
+  --selection-bg: rgba(168,85,247,0.09);
+  --selection-border: rgba(168,85,247,0.32);
 }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ─── React Flow Core Overrides ─── */
+
+/* Canvas background */
+.react-flow {
+  background: var(--bg-primary) !important;
 }
 
 .react-flow__background {
-  background-color: var(--canvas-bg);
+  background: var(--bg-primary) !important;
 }
+
+/* Remove default white node box-shadow/border */
+.react-flow__node {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  border-radius: 0 !important;
+}
+
+/* CRITICAL: remove selected node's default purple ring (we handle it ourselves) */
+.react-flow__node.selected > * {
+  outline: none !important;
+  box-shadow: none !important;
+}
+.react-flow__node:focus {
+  outline: none !important;
+}
+.react-flow__node:focus-visible {
+  outline: none !important;
+}
+
+/* Handles */
+.react-flow__handle {
+  border-radius: 50% !important;
+  transition: width 0.15s ease, height 0.15s ease !important;
+  cursor: crosshair !important;
+}
+.react-flow__handle:hover {
+  width: 13px !important;
+  height: 13px !important;
+}
+
+/* ─── CRITICAL: Kill ALL edge dashing globally ─── */
+/* ReactFlow's animated edge class adds a CSS dash animation — we kill it here */
+.react-flow__edge path,
+.react-flow__edge-path {
+  stroke-dasharray: none !important;
+  stroke-dashoffset: 0 !important;
+  animation: none !important;
+}
+.react-flow__edge.animated path,
+.react-flow__edge.animated .react-flow__edge-path {
+  stroke-dasharray: none !important;
+  animation: none !important;
+}
+
+/* Connection line while dragging — solid, clean */
+.react-flow__connection-path {
+  stroke: color-mix(in srgb, var(--text-primary) 30%, transparent) !important;
+  stroke-width: 1.5px !important;
+  stroke-dasharray: none !important;
+  animation: none !important;
+}
+
+/* Edge selection */
+.react-flow__edge.selected path {
+  opacity: 1 !important;
+}
+
+/* Controls panel */
+.react-flow__controls {
+  background: var(--bg-secondary) !important;
+  border: 0.5px solid var(--border) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+}
+.react-flow__controls-button {
+  background: var(--bg-secondary) !important;
+  border-bottom: 0.5px solid var(--border) !important;
+  color: var(--text-faint) !important;
+  fill: var(--text-faint) !important;
+}
+.react-flow__controls-button:hover {
+  background: var(--bg-elevated-hover) !important;
+  fill: var(--text-soft) !important;
+}
+
+/* Minimap */
+.react-flow__minimap {
+  background: var(--bg-secondary) !important;
+  border: 0.5px solid var(--border) !important;
+  border-radius: 10px !important;
+  overflow: hidden;
+}
+.react-flow__minimap-svg {
+  background: var(--bg-secondary) !important;
+}
+
+/* Selection box */
+.react-flow__selection {
+  background: var(--selection-bg) !important;
+  border: 1px solid var(--selection-border) !important;
+}
+
+/* ─── Animations ─── */
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ─── Scrollbars ─── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text-primary) 18%, transparent); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--text-primary) 28%, transparent); }

@@ -1,12 +1,21 @@
 "use client"
 
 import { Handle, Position, type NodeProps } from "@xyflow/react"
-import { Image as ImageIcon, Upload, Loader2, X } from "lucide-react"
+import { Image as ImageIcon, Upload, Film, Loader2, X } from "lucide-react"
 import { NodeWrapper } from "./NodeWrapper"
 import { useWorkflowStore } from "@/store/workflowStore"
 import { useTransloaditUpload } from "@/hooks/useTransloaditUpload"
 import type { UploadImageNodeData } from "@/types"
-import { cn } from "@/lib/utils"
+
+const BLUE = "#0080FF"
+
+const handleStyle = {
+  background: BLUE,
+  width: 9,
+  height: 9,
+  border: "2px solid var(--bg-node)",
+  boxShadow: `0 0 0 3px ${BLUE}25`,
+}
 
 export function UploadImageNode({ id, data }: NodeProps) {
   const nodeData = data as UploadImageNodeData
@@ -16,79 +25,172 @@ export function UploadImageNode({ id, data }: NodeProps) {
   const { upload, uploading, progress } = useTransloaditUpload({
     templateId: process.env.NEXT_PUBLIC_TRANSLOADIT_IMAGE_TEMPLATE_ID!,
     accept: ".jpg,.jpeg,.png,.webp,.gif",
-    onSuccess: (result) => {
+    onSuccess: (result) =>
       updateNodeData(id, {
         imageUrl: result.url,
         fileName: result.name,
-      } as Partial<UploadImageNodeData>)
-    },
+      } as Partial<UploadImageNodeData>),
     onError: (err) => alert(err),
   })
 
   return (
-    <NodeWrapper title="Upload Image" icon={<ImageIcon size={12} />} status={status} color="#ec4899">
+    <NodeWrapper
+      nodeId={id}
+      title="Image"
+      icon={<ImageIcon size={12} />}
+      status={status}
+      accentColor={BLUE}
+      titleColor={BLUE}
+    >
+      {/* Handles */}
+      <Handle
+        type="source"
+        position={Position.Right}
+        id="outputImage"
+        style={{ ...handleStyle, right: -20, top: "40%" }}
+      />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="image"
+        style={{ ...handleStyle, left: -20, top: "40%" }}
+      />
+
       {nodeData.imageUrl ? (
-        <div className="relative group">
+        <div className="relative group nodrag">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={nodeData.imageUrl}
             alt="uploaded"
-            className="w-full h-32 object-cover rounded-md border border-[#2a2a2a]"
-          />
-          <button
-            onClick={() => updateNodeData(id, { imageUrl: null, fileName: null } as Partial<UploadImageNodeData>)}
-            className="absolute top-1 right-1 p-0.5 bg-[#1a1a1a] text-[#9ca3af] rounded
-              opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <X size={10} />
-          </button>
-          <div className="text-[10px] text-[#6b7280] mt-1 truncate">{nodeData.fileName}</div>
-        </div>
-      ) : (
-        <label className={cn(
-          "flex flex-col items-center gap-1.5 py-4 border border-dashed border-[#2a2a2a]",
-          "rounded-md transition-colors",
-          uploading ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:border-[#ec4899]"
-        )}>
-          {uploading ? (
-            <>
-              <Loader2 size={16} className="text-[#ec4899] animate-spin" />
-              <span className="text-[10px] text-[#6b7280]">Uploading {progress}%</span>
-              <div className="w-full px-3">
-                <div className="h-1 bg-[#2a2a2a] rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#ec4899] rounded-full transition-all"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <Upload size={16} className="text-[#6b7280]" />
-              <span className="text-[10px] text-[#6b7280]">jpg, jpeg, png, webp, gif</span>
-            </>
-          )}
-          <input
-            type="file"
-            accept=".jpg,.jpeg,.png,.webp,.gif"
-            className="hidden"
-            disabled={uploading}
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) upload(file)
-              e.target.value = ""
+            draggable={false}
+            style={{
+              width: "100%",
+              height: 160,
+              objectFit: "cover",
+              borderRadius: 8,
+              display: "block",
             }}
           />
-        </label>
+          <button
+            className="nodrag"
+            onClick={() =>
+              updateNodeData(id, {
+                imageUrl: null,
+                fileName: null,
+              } as Partial<UploadImageNodeData>)
+            }
+            style={{
+              position: "absolute",
+              top: 6,
+              left: 6,
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              background: "rgba(0,0,0,0.7)",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              opacity: 0,
+              transition: "opacity 0.15s",
+            }}
+            onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.opacity = "1")}
+            onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.opacity = "0")}
+          >
+            <X size={11} color="white" />
+          </button>
+        </div>
+      ) : (
+        <div
+          className="nodrag"
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}
+        >
+          <label
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              padding: "20px 8px",
+              borderRadius: 8,
+              background: "var(--bg-elevated)",
+              border: "0.5px solid var(--border)",
+              cursor: uploading ? "not-allowed" : "pointer",
+              opacity: uploading ? 0.5 : 1,
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) =>
+              !uploading && ((e.currentTarget as HTMLElement).style.background = "var(--bg-elevated-hover)")
+            }
+            onMouseLeave={(e) =>
+              ((e.currentTarget as HTMLElement).style.background = "var(--bg-elevated)")
+            }
+          >
+            {uploading ? (
+              <Loader2 size={18} color="var(--text-ghost)" style={{ animation: "spin 1s linear infinite" }} />
+            ) : (
+              <Upload size={18} color="var(--text-ghost)" />
+            )}
+            <span style={{ fontSize: 11, color: "var(--text-ghost)" }}>
+              {uploading ? `${progress}%` : "Upload"}
+            </span>
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp,.gif"
+              style={{ display: "none" }}
+              disabled={uploading}
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) upload(f)
+                e.target.value = ""
+              }}
+            />
+          </label>
+
+          <button
+            className="nodrag"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              padding: "20px 8px",
+              borderRadius: 8,
+              background: "var(--bg-elevated)",
+              border: "0.5px solid var(--border)",
+              cursor: "pointer",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) =>
+              ((e.currentTarget as HTMLElement).style.background = "var(--bg-elevated-hover)")
+            }
+            onMouseLeave={(e) =>
+              ((e.currentTarget as HTMLElement).style.background = "var(--bg-elevated)")
+            }
+          >
+            <Film size={18} color="var(--text-ghost)" />
+            <span style={{ fontSize: 11, color: "var(--text-ghost)" }}>
+              Select asset
+            </span>
+          </button>
+        </div>
       )}
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="output"
-        style={{ background: "#ec4899", width: 8, height: 8, border: "2px solid #1a1a1a" }}
-      />
+      {nodeData.fileName && (
+        <span
+          style={{
+            fontSize: 10,
+            color: "var(--text-ghost)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            padding: "0 2px",
+          }}
+        >
+          {nodeData.fileName}
+        </span>
+      )}
     </NodeWrapper>
   )
 }

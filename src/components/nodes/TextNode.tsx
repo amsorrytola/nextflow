@@ -1,10 +1,12 @@
 "use client"
 
 import { Handle, Position, type NodeProps } from "@xyflow/react"
-import { Type } from "lucide-react"
+import { TextCursor } from "lucide-react"
 import { NodeWrapper } from "./NodeWrapper"
 import { useWorkflowStore } from "@/store/workflowStore"
 import type { TextNodeData } from "@/types"
+
+const YELLOW = "#FCC800"
 
 export function TextNode({ id, data }: NodeProps) {
   const nodeData = data as TextNodeData
@@ -12,23 +14,72 @@ export function TextNode({ id, data }: NodeProps) {
   const status = executionStatus[id] ?? "idle"
 
   return (
-    <NodeWrapper title="Text" icon={<Type size={12} />} status={status} color="#6366f1">
+    <NodeWrapper
+      nodeId={id}
+      title="Prompt"
+      icon={<TextCursor size={12} />}
+      status={status}
+      accentColor={YELLOW}
+      titleColor={YELLOW}
+    >
+      {/* Input / Output label row */}
+      <div className="flex items-center justify-between text-[11px] relative" style={{ color: "var(--text-ghost)" }}>
+        <div className="flex items-center gap-1.5">
+          <Handle
+            type="target"
+            position={Position.Left}
+            id="inputText"
+            style={{
+              background: YELLOW,
+              width: 9,
+              height: 9,
+              border: "2px solid var(--bg-node)",
+              left: -20,
+              boxShadow: `0 0 0 3px ${YELLOW}25`,
+            }}
+          />
+          <span>Input</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span>Output</span>
+          <Handle
+            type="source"
+            position={Position.Right}
+            id="outputText"
+            style={{
+              background: YELLOW,
+              width: 9,
+              height: 9,
+              border: "2px solid var(--bg-node)",
+              right: -20,
+              boxShadow: `0 0 0 3px ${YELLOW}25`,
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Textarea — nowheel prevents canvas scroll stealing, nodrag not set so node stays draggable */}
       <textarea
         value={nodeData.text}
         onChange={(e) =>
           updateNodeData(id, { text: e.target.value } as Partial<TextNodeData>)
         }
-        placeholder="Enter text..."
-        rows={3}
-        className="w-full bg-[#111111] border border-[#2a2a2a] rounded-md px-2 py-1.5
-          text-xs text-white placeholder:text-[#6b7280] resize-none outline-none
-          focus:border-[#6366f1] transition-colors"
-      />
-      <Handle
-        type="source"
-        position={Position.Right}
-        id="output"
-        style={{ background: "#6366f1", width: 8, height: 8, border: "2px solid #1a1a1a" }}
+        placeholder="Write something..."
+        rows={5}
+        className="nowheel nodrag"
+        style={{
+          width: "100%",
+          background: "var(--bg-elevated)",
+          border: "0.5px solid var(--border)",
+          borderRadius: 6,
+          padding: "8px 10px",
+          color: "var(--text-soft)",
+          fontSize: 12,
+          fontFamily: "inherit",
+          resize: "none",
+          outline: "none",
+          lineHeight: 1.6,
+        }}
       />
     </NodeWrapper>
   )

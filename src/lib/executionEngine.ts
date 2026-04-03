@@ -47,10 +47,8 @@ export async function executeWorkflow(
   const nodeOutputs: Record<string, unknown> = {}
   const results: NodeExecutionResult[] = []
   const completed = new Set<string>()
-  const pendingCount = { ...inDegree }
 
-  // Run nodes level by level (topological BFS with parallel execution per level)
-  // Build levels
+  // Build execution levels via topological BFS
   const levels: string[][] = []
   const tempInDegree = { ...inDegree }
   let currentLevel = targetIds.filter((id) => (tempInDegree[id] ?? 0) === 0)
@@ -68,12 +66,11 @@ export async function executeWorkflow(
   }
 
   for (const level of levels) {
-    // Run all nodes in this level in parallel
     await Promise.all(level.map(async (nodeId) => {
       onNodeStart(nodeId)
       const node = nodes.find((n) => n.id === nodeId)!
 
-      // Collect inputs from completed upstream nodes
+      // Collect inputs from upstream node outputs
       const inputs: Record<string, unknown> = {}
       for (const edge of edges) {
         if (edge.target !== nodeId) continue
@@ -82,11 +79,8 @@ export async function executeWorkflow(
 
         if (handle === "images") {
           const existing = inputs["images"]
-          if (Array.isArray(existing)) {
-            existing.push(srcOutput)
-          } else {
-            inputs["images"] = [srcOutput]
-          }
+          if (Array.isArray(existing)) existing.push(srcOutput)
+          else inputs["images"] = [srcOutput]
         } else if (handle) {
           inputs[handle] = srcOutput
         }
@@ -99,7 +93,6 @@ export async function executeWorkflow(
         inputs,
       })
 
-      // Store output for downstream nodes
       nodeOutputs[nodeId] = result.output
       results.push(result)
       onNodeComplete(nodeId, result)

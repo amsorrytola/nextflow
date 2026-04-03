@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback } from "react"
+import { useCallback, useState, useRef } from "react"
 import {
   ReactFlow,
   Background,
@@ -9,6 +9,11 @@ import {
   Controls,
   type NodeTypes,
   type IsValidConnection,
+  type Edge,
+  type EdgeTypes,
+  getSmoothStepPath,
+  type EdgeProps,
+  useReactFlow,
 } from "@xyflow/react"
 import "@xyflow/react/dist/style.css"
 import { useWorkflowStore } from "@/store/workflowStore"
@@ -18,6 +23,7 @@ import { UploadVideoNode } from "@/components/nodes/UploadVideoNode"
 import { LLMNode } from "@/components/nodes/LLMNode"
 import { CropImageNode } from "@/components/nodes/CropImageNode"
 import { ExtractFrameNode } from "@/components/nodes/ExtractFrameNode"
+import { CanvasContextMenu } from "@/components/canvas/CanvasContextMenu"
 
 const nodeTypes: NodeTypes = {
   textNode: TextNode,
@@ -29,8 +35,11 @@ const nodeTypes: NodeTypes = {
 }
 
 const HANDLE_TYPES: Record<string, "text" | "image" | "video"> = {
+  "textNode:outputText": "text",
   "textNode:output": "text",
+  "uploadImageNode:outputImage": "image",
   "uploadImageNode:output": "image",
+  "uploadVideoNode:outputVideo": "video",
   "uploadVideoNode:output": "video",
   "llmNode:output": "text",
   "cropImageNode:output": "image",
@@ -47,12 +56,106 @@ const HANDLE_TYPES: Record<string, "text" | "image" | "video"> = {
   "extractFrameNode:timestamp": "text",
 }
 
-export function WorkflowCanvas() {
+const DATA_TYPE_COLORS: Record<string, string> = {
+  text: "#FCC800",
+  image: "#0080FF",
+  video: "#29D246",
+}
+
+function KreaEdge({
+  id,
+  sourceX,
+  sourceY,
+  targetX,
+  targetY,
+  sourcePosition,
+  targetPosition,
+  data,
+  selected,
+}: EdgeProps) {
+  const color = (data?.color as string) ?? "#FCC800"
+  const isActive = (data?.isActive as boolean) ?? false
+  const isDone = (data?.isDone as boolean) ?? false
+
+  const [edgePath] = getSmoothStepPath({
+    sourceX,
+    sourceY,
+    sourcePosition,
+    targetX,
+    targetY,
+    targetPosition,
+    borderRadius: 16,
+  })
+
+  const opacity = isActive ? 1 : isDone ? 0.85 : selected ? 0.9 : 0.55
+
+  return (
+    <>
+      {(isActive || selected) && (
+        <path
+          d={edgePath}
+          fill="none"
+          stroke={color}
+          strokeWidth={isActive ? 10 : 6}
+          opacity={isActive ? 0.2 : 0.1}
+          style={{ filter: `blur(${isActive ? 8 : 4}px)`, pointerEvents: "none" }}
+        />
+      )}
+      <path
+        d={edgePath}
+        fill="none"
+        stroke={color}
+        strokeWidth={isActive ? 2 : 1.5}
+        opacity={opacity}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{
+          filter: isActive ? `drop-shadow(0 0 4px ${color}bb)` : "none",
+          transition: "opacity 0.3s ease, stroke-width 0.2s ease",
+          pointerEvents: "none",
+        }}
+      />
+      {isActive && (
+        <circle r="3.5" fill={color} opacity={0.95}>
+          <animateMotion dur="1s" repeatCount="indefinite" path={edgePath} />
+        </circle>
+      )}
+      <path
+        d={edgePath}
+        fill="none"
+        stroke="transparent"
+        strokeWidth={20}
+        style={{ cursor: "pointer" }}
+      />
+    </>
+  )
+}
+
+const edgeTypes: EdgeTypes = {
+  kreaEdge: KreaEdge,
+}
+
+// Inner component that has access to useReactFlow
+function CanvasInner() {
   const {
-    nodes, edges,
-    onNodesChange, onEdgesChange, onConnect,
+    nodes,
+    edges,
+    onNodesChange,
+    onEdgesChange,
+    onConnect,
     setSelectedNodeIds,
+    executionStatus,
   } = useWorkflowStore()
+
+  const { screenToFlowPosition } = useReactFlow()
+
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    screenX: number
+    screenY: number
+    canvasX: number
+    canvasY: number
+  } | null>(null)
 
   const isValidConnection: IsValidConnection = useCallback(
     (connection) => {
@@ -70,35 +173,149 @@ export function WorkflowCanvas() {
   )
 
   const onSelectionChange = useCallback(
-    ({ nodes }: { nodes: { id: string }[] }) => {
-      setSelectedNodeIds(nodes.map((n) => n.id))
+    ({ nodes: selectedNodes }: { nodes: { id: string }[] }) => {
+      setSelectedNodeIds(selectedNodes.map((n) => n.id))
     },
     [setSelectedNodeIds]
   )
 
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent) => {
+      event.preventDefault()
+      const canvasPos = screenToFlowPosition({ x: event.clientX, y: event.clientY })
+      setContextMenu({
+        screenX: event.clientX,
+        screenY: event.clientY,
+        canvasX: canvasPos.x,
+        canvasY: canvasPos.y,
+      })
+    },
+    [screenToFlowPosition]
+  )
+
+  const styledEdges: Edge[] = edges.map((edge) => {
+    const sourceNode = nodes.find((n) => n.id === edge.source)
+    const handleKey = `${sourceNode?.type}:${edge.sourceHandle}`
+    const dataType = HANDLE_TYPES[handleKey] ?? "text"
+    const color = DATA_TYPE_COLORS[dataType] ?? "#FCC800"
+    const sourceStatus = executionStatus[edge.source ?? ""]
+    const targetStatus = executionStatus[edge.target ?? ""]
+    const isActive = sourceStatus === "running" || targetStatus === "running"
+    const isDone = sourceStatus === "success"
+
+    return {
+      ...edge,
+      type: "kreaEdge",
+      animated: false,
+      style: undefined,
+      data: { ...(edge.data ?? {}), color, isActive, isDone },
+    }
+  })
+
   return (
-    <div className="flex-1 w-full" style={{ height: "calc(100vh - 48px)" }}>
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onSelectionChange={onSelectionChange}
-        isValidConnection={isValidConnection}
-        nodeTypes={nodeTypes}
-        fitView
-        deleteKeyCode={["Delete", "Backspace"]}
-        multiSelectionKeyCode="Shift"
-        className="bg-[#0d0d0d]"
-      >
-        <Background variant={BackgroundVariant.Dots} gap={24} size={1} color="#2a2a2a" />
-        <MiniMap position="bottom-right"
-          style={{ background: "#111111", border: "1px solid #2a2a2a" }}
-          nodeColor="#a855f7" maskColor="rgba(0,0,0,0.6)" />
-        <Controls position="bottom-left"
-          style={{ background: "#111111", border: "1px solid #2a2a2a" }} />
-      </ReactFlow>
-    </div>
+    <>
+      <style>{`
+        .react-flow__edge path { stroke-dasharray: none !important; animation: none !important; }
+        .react-flow__edge.animated path { stroke-dasharray: none !important; animation: none !important; }
+        .react-flow__connection-path {
+          stroke: color-mix(in srgb, var(--text-primary) 35%, transparent) !important;
+          stroke-width: 1.5px !important;
+          stroke-dasharray: none !important;
+          animation: none !important;
+        }
+        .react-flow__handle { transition: width 0.15s ease, height 0.15s ease, opacity 0.15s ease !important; }
+        .react-flow__handle:hover { width: 14px !important; height: 14px !important; }
+        .react-flow__background pattern circle { fill: color-mix(in srgb, var(--text-primary) 10%, transparent) !important; }
+        .react-flow__pane { cursor: default !important; }
+      `}</style>
+
+      <div className="flex-1 w-full" style={{ height: "100vh" }} onContextMenu={handleContextMenu}>
+        <ReactFlow
+          nodes={nodes}
+          edges={styledEdges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          onSelectionChange={onSelectionChange}
+          isValidConnection={isValidConnection}
+          nodeTypes={nodeTypes}
+          edgeTypes={edgeTypes}
+          fitView
+          fitViewOptions={{ padding: 0.18 }}
+          deleteKeyCode={["Delete", "Backspace"]}
+          multiSelectionKeyCode="Shift"
+          style={{ background: "var(--bg-primary)" }}
+          minZoom={0.2}
+          maxZoom={2}
+          defaultEdgeOptions={{ type: "kreaEdge", animated: false }}
+          nodesDraggable={true}
+          nodesConnectable={true}
+          elementsSelectable={true}
+          panOnDrag={true}
+          zoomOnScroll={true}
+          // Dismiss context menu on canvas click
+          onPaneClick={() => setContextMenu(null)}
+          onNodeClick={() => setContextMenu(null)}
+        >
+          <Background
+            variant={BackgroundVariant.Dots}
+            gap={18}
+            size={0.9}
+            color="color-mix(in srgb, var(--text-primary) 10%, transparent)"
+          />
+
+          <MiniMap
+            position="bottom-right"
+            style={{
+              background: "#161616",
+              border: "0.5px solid rgba(255,255,255,0.08)",
+              borderRadius: 10,
+              overflow: "hidden",
+            }}
+            nodeColor={(node) => {
+              const status = executionStatus[node.id]
+              if (status === "running") return "#a855f7"
+              if (status === "success") return "#4CAF50"
+              if (status === "error") return "#ef4444"
+              return "#2e2e2e"
+            }}
+            maskColor="rgba(0,0,0,0.65)"
+          />
+
+          <Controls
+            position="bottom-left"
+            style={{
+              background: "#1a1a1a",
+              border: "0.5px solid rgba(255,255,255,0.08)",
+              borderRadius: 10,
+              overflow: "hidden",
+              boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+            }}
+          />
+        </ReactFlow>
+      </div>
+
+      {/* Right-click context menu */}
+      {contextMenu && (
+        <CanvasContextMenu
+          x={contextMenu.screenX}
+          y={contextMenu.screenY}
+          canvasX={contextMenu.canvasX}
+          canvasY={contextMenu.canvasY}
+          onClose={() => setContextMenu(null)}
+        />
+      )}
+    </>
+  )
+}
+
+// Outer component wraps with ReactFlowProvider so useReactFlow works
+import { ReactFlowProvider } from "@xyflow/react"
+
+export function WorkflowCanvas() {
+  return (
+    <ReactFlowProvider>
+      <CanvasInner />
+    </ReactFlowProvider>
   )
 }

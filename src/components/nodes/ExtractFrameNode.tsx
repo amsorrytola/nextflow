@@ -7,69 +7,62 @@ import { useWorkflowStore } from "@/store/workflowStore"
 import type { ExtractFrameNodeData } from "@/types"
 import { cn } from "@/lib/utils"
 
+const GREEN = "#4CAF50"
+const GRAY = "#666"
+
 export function ExtractFrameNode({ id, data }: NodeProps) {
   const nodeData = data as ExtractFrameNodeData
   const { updateNodeData, executionStatus } = useWorkflowStore()
   const status = executionStatus[id] ?? "idle"
   const edges = useEdges()
-
-  const isConnected = (handleId: string) =>
-    edges.some((e) => e.target === id && e.targetHandle === handleId)
+  const isConnected = (h: string) => edges.some(e => e.target === id && e.targetHandle === h)
 
   return (
-    <NodeWrapper title="Extract Frame" icon={<Film size={12} />} status={status} color="#06b6d4">
-      {/* video_url handle */}
-      <div className="relative flex items-center h-6">
+    <NodeWrapper nodeId={id} title="Extract Frame" icon={<Film size={13} />} status={status} accentColor={GREEN}>
+      <div className="relative flex items-center h-7">
         <Handle type="target" position={Position.Left} id="video_url"
-          style={{ top: "50%", background: "#f59e0b", width: 8, height: 8, border: "2px solid #1a1a1a" }} />
-        <span className="text-[10px] text-[#6b7280] ml-5">
-          video {isConnected("video_url") ? <span className="text-[#f59e0b]">● connected</span> : <span className="text-[#ef4444]">*</span>}
+          style={{ background: GREEN, width: 10, height: 10, border: "2px solid var(--bg-node)", left: -18 }} />
+        <span className="text-[12px] ml-1" style={{ color: "var(--text-muted)" }}>
+          video {isConnected("video_url") ? <span style={{ color: GREEN }}>● connected</span> : <span className="text-[#ef4444]">*</span>}
         </span>
       </div>
 
-      {/* timestamp */}
-      <div className="relative">
+      <div className="relative flex items-center gap-2">
         <Handle type="target" position={Position.Left} id="timestamp"
-          style={{ top: "50%", background: "#6b7280", width: 6, height: 6, border: "2px solid #1a1a1a" }} />
-        <div className="flex items-center gap-2">
-          <span className="text-[10px] text-[#6b7280] w-16 shrink-0 ml-3">Timestamp</span>
-          <input
-            disabled={isConnected("timestamp")}
-            value={nodeData.timestamp}
-            onChange={(e) => updateNodeData(id, { timestamp: e.target.value } as Partial<ExtractFrameNodeData>)}
-            placeholder="0 or 50%"
-            className={cn(
-              "flex-1 bg-[#111111] border border-[#2a2a2a] rounded px-2 py-1 text-xs text-white outline-none",
-              "focus:border-[#06b6d4] transition-colors",
-              isConnected("timestamp") && "opacity-40 cursor-not-allowed"
-            )}
-          />
-        </div>
+          style={{ background: GRAY, width: 7, height: 7, border: "2px solid var(--bg-node)", left: -18 }} />
+        <span className="text-[11px] w-16 shrink-0" style={{ color: "var(--text-muted)" }}>Timestamp</span>
+        <input
+          disabled={isConnected("timestamp")}
+          value={nodeData.timestamp}
+          onChange={e => updateNodeData(id, { timestamp: e.target.value } as Partial<ExtractFrameNodeData>)}
+          placeholder="0 or 50%"
+          className={cn(
+            "flex-1 rounded-lg px-2 py-1.5 text-[12px] outline-none",
+            isConnected("timestamp") && "opacity-40 cursor-not-allowed"
+          )}
+          style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+        />
       </div>
 
-      <button
-        disabled={status === "running"}
+      <button disabled={status === "running"}
         className={cn(
-          "flex items-center justify-center gap-1.5 w-full py-1.5 rounded-md text-xs font-medium transition-colors mt-1",
-          status === "running" ? "bg-[#2a2a2a] text-[#6b7280] cursor-not-allowed" : "bg-[#06b6d4] hover:bg-[#0891b2] text-black"
+          "flex items-center justify-center gap-2 w-full py-2 rounded-lg text-[13px] font-medium transition-colors mt-1",
+          status === "running" ? "cursor-not-allowed" : ""
         )}
-        onClick={() => console.log("run extract frame", id)}
-      >
-        {status === "running" ? <><Loader2 size={12} className="animate-spin" /> Running...</> : <><Play size={12} /> Extract</>}
+        style={status === "running"
+          ? { background: "var(--bg-elevated)", color: "var(--text-muted)" }
+          : { background: GREEN, color: "white" }}>
+        {status === "running" ? <><Loader2 size={13} className="animate-spin" /> Running...</> : <><Play size={13} /> Extract</>}
       </button>
 
       {nodeData.result && (
-        <div className="mt-1">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={nodeData.result} alt="frame" className="w-full h-24 object-cover rounded-md border border-[#2a2a2a]" />
-        </div>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={nodeData.result} alt="frame" className="w-full h-32 object-cover rounded-xl" />
       )}
-      {nodeData.error && (
-        <p className="text-[11px] text-[#ef4444]">{nodeData.error}</p>
-      )}
+      {nodeData.error && <p className="text-[12px] text-[#ef4444]">{nodeData.error}</p>}
 
       <Handle type="source" position={Position.Right} id="output"
-        style={{ background: "#06b6d4", width: 8, height: 8, border: "2px solid #1a1a1a" }} />
+        style={{ background: GREEN, width: 10, height: 10, border: "2px solid var(--bg-node)", right: -18 }} />
     </NodeWrapper>
   )
 }

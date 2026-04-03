@@ -1,12 +1,21 @@
 "use client"
 
 import { Handle, Position, type NodeProps } from "@xyflow/react"
-import { Video, Upload, Loader2, X } from "lucide-react"
+import { Video, Upload, Film, Loader2, X } from "lucide-react"
 import { NodeWrapper } from "./NodeWrapper"
 import { useWorkflowStore } from "@/store/workflowStore"
 import { useTransloaditUpload } from "@/hooks/useTransloaditUpload"
 import type { UploadVideoNodeData } from "@/types"
-import { cn } from "@/lib/utils"
+
+const GREEN = "#29D246"
+
+const handleStyle = {
+  background: GREEN,
+  width: 9,
+  height: 9,
+  border: "2px solid var(--bg-node)",
+  boxShadow: `0 0 0 3px ${GREEN}25`,
+}
 
 export function UploadVideoNode({ id, data }: NodeProps) {
   const nodeData = data as UploadVideoNodeData
@@ -16,78 +25,167 @@ export function UploadVideoNode({ id, data }: NodeProps) {
   const { upload, uploading, progress } = useTransloaditUpload({
     templateId: process.env.NEXT_PUBLIC_TRANSLOADIT_VIDEO_TEMPLATE_ID!,
     accept: ".mp4,.mov,.webm,.m4v",
-    onSuccess: (result) => {
+    onSuccess: (result) =>
       updateNodeData(id, {
         videoUrl: result.url,
         fileName: result.name,
-      } as Partial<UploadVideoNodeData>)
-    },
+      } as Partial<UploadVideoNodeData>),
     onError: (err) => alert(err),
   })
 
   return (
-    <NodeWrapper title="Upload Video" icon={<Video size={12} />} status={status} color="#f59e0b">
-      {nodeData.videoUrl ? (
-        <div className="relative group">
-          <video
-            src={nodeData.videoUrl}
-            controls
-            className="w-full h-32 rounded-md border border-[#2a2a2a] bg-black"
-          />
-          <button
-            onClick={() => updateNodeData(id, { videoUrl: null, fileName: null } as Partial<UploadVideoNodeData>)}
-            className="absolute top-1 right-1 p-0.5 bg-[#1a1a1a] text-[#9ca3af] rounded
-              opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <X size={10} />
-          </button>
-          <div className="text-[10px] text-[#6b7280] mt-1 truncate">{nodeData.fileName}</div>
-        </div>
-      ) : (
-        <label className={cn(
-          "flex flex-col items-center gap-1.5 py-4 border border-dashed border-[#2a2a2a]",
-          "rounded-md transition-colors",
-          uploading ? "cursor-not-allowed opacity-60" : "cursor-pointer hover:border-[#f59e0b]"
-        )}>
-          {uploading ? (
-            <>
-              <Loader2 size={16} className="text-[#f59e0b] animate-spin" />
-              <span className="text-[10px] text-[#6b7280]">Uploading {progress}%</span>
-              <div className="w-full px-3">
-                <div className="h-1 bg-[#2a2a2a] rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-[#f59e0b] rounded-full transition-all"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
-              </div>
-            </>
-          ) : (
-            <>
-              <Upload size={16} className="text-[#6b7280]" />
-              <span className="text-[10px] text-[#6b7280]">mp4, mov, webm, m4v</span>
-            </>
-          )}
-          <input
-            type="file"
-            accept=".mp4,.mov,.webm,.m4v"
-            className="hidden"
-            disabled={uploading}
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (file) upload(file)
-              e.target.value = ""
-            }}
-          />
-        </label>
-      )}
-
+    <NodeWrapper
+      nodeId={id}
+      title="Video"
+      icon={<Video size={12} />}
+      status={status}
+      accentColor={GREEN}
+      titleColor={GREEN}
+    >
+      {/* Handles */}
       <Handle
         type="source"
         position={Position.Right}
-        id="output"
-        style={{ background: "#f59e0b", width: 8, height: 8, border: "2px solid #1a1a1a" }}
+        id="outputVideo"
+        style={{ ...handleStyle, right: -20, top: "40%" }}
       />
+      <Handle
+        type="target"
+        position={Position.Left}
+        id="video"
+        style={{ ...handleStyle, left: -20, top: "40%" }}
+      />
+
+      {nodeData.videoUrl ? (
+        <div className="relative group nodrag">
+          <video
+            src={nodeData.videoUrl}
+            controls
+            style={{
+              width: "100%",
+              height: 160,
+              borderRadius: 8,
+              background: "#000",
+              objectFit: "contain",
+              display: "block",
+            }}
+          />
+          <button
+            className="nodrag"
+            onClick={() =>
+              updateNodeData(id, {
+                videoUrl: null,
+                fileName: null,
+              } as Partial<UploadVideoNodeData>)
+            }
+            style={{
+              position: "absolute",
+              top: 6,
+              left: 6,
+              width: 22,
+              height: 22,
+              borderRadius: "50%",
+              background: "rgba(0,0,0,0.7)",
+              border: "none",
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <X size={11} color="white" />
+          </button>
+        </div>
+      ) : (
+        <div
+          className="nodrag"
+          style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}
+        >
+          <label
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              padding: "20px 8px",
+              borderRadius: 8,
+              background: "var(--bg-elevated)",
+              border: "0.5px solid var(--border)",
+              cursor: uploading ? "not-allowed" : "pointer",
+              opacity: uploading ? 0.5 : 1,
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) =>
+              !uploading && ((e.currentTarget as HTMLElement).style.background = "var(--bg-elevated-hover)")
+            }
+            onMouseLeave={(e) =>
+              ((e.currentTarget as HTMLElement).style.background = "var(--bg-elevated)")
+            }
+          >
+            {uploading ? (
+              <Loader2 size={18} color="var(--text-ghost)" style={{ animation: "spin 1s linear infinite" }} />
+            ) : (
+              <Upload size={18} color="var(--text-ghost)" />
+            )}
+            <span style={{ fontSize: 11, color: "var(--text-ghost)" }}>
+              {uploading ? `${progress}%` : "Upload"}
+            </span>
+            <input
+              type="file"
+              accept=".mp4,.mov,.webm,.m4v"
+              style={{ display: "none" }}
+              disabled={uploading}
+              onChange={(e) => {
+                const f = e.target.files?.[0]
+                if (f) upload(f)
+                e.target.value = ""
+              }}
+            />
+          </label>
+
+          <button
+            className="nodrag"
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 8,
+              padding: "20px 8px",
+              borderRadius: 8,
+              background: "var(--bg-elevated)",
+              border: "0.5px solid var(--border)",
+              cursor: "pointer",
+              transition: "background 0.15s",
+            }}
+            onMouseEnter={(e) =>
+              ((e.currentTarget as HTMLElement).style.background = "var(--bg-elevated-hover)")
+            }
+            onMouseLeave={(e) =>
+              ((e.currentTarget as HTMLElement).style.background = "var(--bg-elevated)")
+            }
+          >
+            <Film size={18} color="var(--text-ghost)" />
+            <span style={{ fontSize: 11, color: "var(--text-ghost)" }}>
+              Select asset
+            </span>
+          </button>
+        </div>
+      )}
+
+      {nodeData.fileName && (
+        <span
+          style={{
+            fontSize: 10,
+            color: "var(--text-ghost)",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            padding: "0 2px",
+          }}
+        >
+          {nodeData.fileName}
+        </span>
+      )}
     </NodeWrapper>
   )
 }

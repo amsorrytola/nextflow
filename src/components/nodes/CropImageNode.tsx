@@ -7,93 +7,75 @@ import { useWorkflowStore } from "@/store/workflowStore"
 import type { CropImageNodeData } from "@/types"
 import { cn } from "@/lib/utils"
 
-function PercentInput({
-  label, value, onChange, disabled,
-}: { label: string; value: number; onChange: (v: number) => void; disabled: boolean }) {
-  return (
-    <div className="flex items-center gap-2">
-      <span className="text-[10px] text-[#6b7280] w-16 shrink-0">{label}</span>
-      <input
-        type="number"
-        min={0} max={100}
-        disabled={disabled}
-        value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className={cn(
-          "flex-1 bg-[#111111] border border-[#2a2a2a] rounded px-2 py-1 text-xs text-white outline-none",
-          "focus:border-[#f59e0b] transition-colors",
-          disabled && "opacity-40 cursor-not-allowed"
-        )}
-      />
-      <span className="text-[10px] text-[#6b7280]">%</span>
-    </div>
-  )
-}
+const BLUE = "#4d9de0"
+const GRAY = "#666"
 
 export function CropImageNode({ id, data }: NodeProps) {
   const nodeData = data as CropImageNodeData
   const { updateNodeData, executionStatus } = useWorkflowStore()
   const status = executionStatus[id] ?? "idle"
   const edges = useEdges()
-
-  const isConnected = (handleId: string) =>
-    edges.some((e) => e.target === id && e.targetHandle === handleId)
-
+  const isConnected = (h: string) => edges.some(e => e.target === id && e.targetHandle === h)
   const update = (field: keyof CropImageNodeData, value: unknown) =>
     updateNodeData(id, { [field]: value } as Partial<CropImageNodeData>)
 
+  const params = [
+    { id: "x_percent", label: "X offset", key: "xPercent" as keyof CropImageNodeData },
+    { id: "y_percent", label: "Y offset", key: "yPercent" as keyof CropImageNodeData },
+    { id: "width_percent", label: "Width", key: "widthPercent" as keyof CropImageNodeData },
+    { id: "height_percent", label: "Height", key: "heightPercent" as keyof CropImageNodeData },
+  ]
+
   return (
-    <NodeWrapper title="Crop Image" icon={<Crop size={12} />} status={status} color="#f59e0b">
-      {/* image_url handle */}
-      <div className="relative flex items-center h-6">
+    <NodeWrapper nodeId={id} title="Crop Image" icon={<Crop size={13} />} status={status} accentColor={BLUE}>
+      {/* image input */}
+      <div className="relative flex items-center h-7">
         <Handle type="target" position={Position.Left} id="image_url"
-          style={{ top: "50%", background: "#ec4899", width: 8, height: 8, border: "2px solid #1a1a1a" }} />
-        <span className="text-[10px] text-[#6b7280] ml-5">
-          image {isConnected("image_url") ? <span className="text-[#ec4899]">● connected</span> : <span className="text-[#ef4444]">*</span>}
+          style={{ background: BLUE, width: 10, height: 10, border: "2px solid var(--bg-node)", left: -18 }} />
+        <span className="text-[12px] ml-1" style={{ color: "var(--text-muted)" }}>
+          image {isConnected("image_url") ? <span style={{ color: BLUE }}>● connected</span> : <span className="text-[#ef4444]">*</span>}
         </span>
       </div>
 
-      {/* Crop params — each has a handle + manual input */}
-      {(["x_percent","y_percent","width_percent","height_percent"] as const).map((field, i) => {
-        const labels = ["X offset", "Y offset", "Width", "Height"]
-        const dataKey = field.replace("_percent","Percent").replace(/_([a-z])/g, (_,c) => c.toUpperCase()) as keyof CropImageNodeData
-        return (
-          <div key={field} className="relative">
-            <Handle type="target" position={Position.Left} id={field}
-              style={{ top: "50%", background: "#6b7280", width: 6, height: 6, border: "2px solid #1a1a1a" }} />
-            <PercentInput
-              label={labels[i] ?? field}
-              value={nodeData[dataKey] as number}
-              onChange={(v) => update(dataKey, v)}
-              disabled={isConnected(field)}
-            />
-          </div>
-        )
-      })}
+      {/* Crop params */}
+      {params.map(p => (
+        <div key={p.id} className="relative flex items-center gap-2">
+          <Handle type="target" position={Position.Left} id={p.id}
+            style={{ background: GRAY, width: 7, height: 7, border: "2px solid var(--bg-node)", left: -18 }} />
+          <span className="text-[11px] w-16 shrink-0" style={{ color: "var(--text-muted)" }}>{p.label}</span>
+          <input type="number" min={0} max={100}
+            disabled={isConnected(p.id)}
+            value={nodeData[p.key] as number}
+            onChange={e => update(p.key, Number(e.target.value))}
+            className={cn(
+              "flex-1 rounded-lg px-2 py-1.5 text-[12px] outline-none text-right",
+              isConnected(p.id) && "opacity-40 cursor-not-allowed"
+            )}
+            style={{ background: "var(--bg-elevated)", border: "1px solid var(--border)", color: "var(--text-primary)" }}
+          />
+          <span className="text-[11px]" style={{ color: "var(--text-muted)" }}>%</span>
+        </div>
+      ))}
 
-      <button
-        disabled={status === "running"}
+      <button disabled={status === "running"}
         className={cn(
-          "flex items-center justify-center gap-1.5 w-full py-1.5 rounded-md text-xs font-medium transition-colors mt-1",
-          status === "running" ? "bg-[#2a2a2a] text-[#6b7280] cursor-not-allowed" : "bg-[#f59e0b] hover:bg-[#d97706] text-black"
+          "flex items-center justify-center gap-2 w-full py-2 rounded-lg text-[13px] font-medium transition-colors mt-1",
+          status === "running" ? "cursor-not-allowed" : ""
         )}
-        onClick={() => console.log("run crop", id)}
-      >
-        {status === "running" ? <><Loader2 size={12} className="animate-spin" /> Running...</> : <><Play size={12} /> Crop</>}
+        style={status === "running"
+          ? { background: "var(--bg-elevated)", color: "var(--text-muted)" }
+          : { background: BLUE, color: "white" }}>
+        {status === "running" ? <><Loader2 size={13} className="animate-spin" /> Running...</> : <><Play size={13} /> Crop</>}
       </button>
 
       {nodeData.result && (
-        <div className="mt-1">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={nodeData.result} alt="cropped" className="w-full h-24 object-cover rounded-md border border-[#2a2a2a]" />
-        </div>
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={nodeData.result} alt="cropped" className="w-full h-32 object-cover rounded-xl" />
       )}
-      {nodeData.error && (
-        <p className="text-[11px] text-[#ef4444]">{nodeData.error}</p>
-      )}
+      {nodeData.error && <p className="text-[12px] text-[#ef4444]">{nodeData.error}</p>}
 
       <Handle type="source" position={Position.Right} id="output"
-        style={{ background: "#f59e0b", width: 8, height: 8, border: "2px solid #1a1a1a" }} />
+        style={{ background: BLUE, width: 10, height: 10, border: "2px solid var(--bg-node)", right: -18 }} />
     </NodeWrapper>
   )
 }
