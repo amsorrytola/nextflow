@@ -242,6 +242,11 @@ function CanvasInner() {
     }
   })
 
+  const draggableNodes: typeof nodes = nodes.map((node) => ({
+    ...node,
+    dragHandle: ".node-drag-handle",
+  }))
+
   return (
     <>
       <style>{`
@@ -261,7 +266,7 @@ function CanvasInner() {
 
       <div className="flex-1 w-full" style={{ height: "100vh" }} onContextMenu={handleContextMenu}>
         <ReactFlow
-          nodes={nodes}
+          nodes={draggableNodes}
           edges={styledEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
@@ -278,7 +283,6 @@ function CanvasInner() {
           minZoom={0.2}
           maxZoom={2}
           defaultEdgeOptions={{ type: "kreaEdge", animated: false }}
-          nodeDragHandle=".node-drag-handle"
           nodesDraggable={true}
           nodesConnectable={true}
           elementsSelectable={true}
