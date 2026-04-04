@@ -17,375 +17,267 @@ interface KreaTopBarProps {
   onRightPanelChange: (panel: RightPanelView) => void
 }
 
+const pill = (active = false): React.CSSProperties => ({
+  display: "flex", alignItems: "center", gap: 6,
+  height: 30, padding: "0 10px", borderRadius: 8,
+  border: `1px solid rgba(255,255,255,${active ? "0.10" : "0.068"})`,
+  background: active ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.042)",
+  backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)",
+  cursor: "pointer", whiteSpace: "nowrap" as const,
+  fontSize: 12.5, fontWeight: 400, letterSpacing: "-0.012em",
+  color: active ? "var(--text-primary)" : "var(--text-secondary)",
+  transition: "background 0.12s, border-color 0.12s, color 0.12s",
+  userSelect: "none" as const,
+})
+
+const hover = (el: HTMLElement, enter: boolean) => {
+  el.style.background    = enter ? "rgba(255,255,255,0.075)" : "rgba(255,255,255,0.042)"
+  el.style.borderColor   = enter ? "rgba(255,255,255,0.11)"  : "rgba(255,255,255,0.068)"
+  el.style.color         = enter ? "var(--text-primary)"      : "var(--text-secondary)"
+}
+
 export function KreaTopBar({ workflowId, rightPanel, onRightPanelChange }: KreaTopBarProps) {
   const { workflowName, setWorkflowName, nodes, edges } = useWorkflowStore()
   const router = useRouter()
 
-  const [editing, setEditing] = useState(false)
-  const [draft, setDraft] = useState(workflowName)
-  const inputRef = useRef<HTMLInputElement>(null)
+  const [editing, setEditing]         = useState(false)
+  const [draft, setDraft]             = useState(workflowName)
+  const [dropOpen, setDropOpen]       = useState(false)
+  const [panelOpen, setPanelOpen]     = useState(false)
+  const [theme, setTheme]             = useState<ThemeMode>("dark")
 
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const [panelMenuOpen, setPanelMenuOpen] = useState(false)
-  const panelMenuRef = useRef<HTMLDivElement>(null)
-  const [theme, setTheme] = useState<ThemeMode>("dark")
+  const inputRef    = useRef<HTMLInputElement>(null)
+  const dropRef     = useRef<HTMLDivElement>(null)
+  const panelRef    = useRef<HTMLDivElement>(null)
 
-  // Keep draft in sync when name changes externally (e.g. on load)
-  useEffect(() => {
-    if (!editing) setDraft(workflowName)
-  }, [workflowName, editing])
-
-  // Focus & select-all when entering edit mode
-  useEffect(() => {
-    if (editing && inputRef.current) {
-      inputRef.current.focus()
-      inputRef.current.select()
-    }
-  }, [editing])
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (!dropdownOpen) return
-    const handler = (e: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setDropdownOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [dropdownOpen])
+  useEffect(() => { if (!editing) setDraft(workflowName) }, [workflowName, editing])
+  useEffect(() => { if (editing) { inputRef.current?.focus(); inputRef.current?.select() } }, [editing])
 
   useEffect(() => {
-    if (!panelMenuOpen) return
-    const handler = (e: MouseEvent) => {
-      if (panelMenuRef.current && !panelMenuRef.current.contains(e.target as Node)) {
-        setPanelMenuOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handler)
-    return () => document.removeEventListener("mousedown", handler)
-  }, [panelMenuOpen])
+    if (!dropOpen) return
+    const h = (e: MouseEvent) => { if (!dropRef.current?.contains(e.target as Node)) setDropOpen(false) }
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h)
+  }, [dropOpen])
 
   useEffect(() => {
-    const savedTheme = window.localStorage.getItem("nextflow-theme")
-    const initialTheme: ThemeMode = savedTheme === "light" ? "light" : "dark"
-    setTheme(initialTheme)
-    document.documentElement.setAttribute("data-theme", initialTheme)
+    if (!panelOpen) return
+    const h = (e: MouseEvent) => { if (!panelRef.current?.contains(e.target as Node)) setPanelOpen(false) }
+    document.addEventListener("mousedown", h); return () => document.removeEventListener("mousedown", h)
+  }, [panelOpen])
+
+  useEffect(() => {
+    const saved = localStorage.getItem("nextflow-theme") as ThemeMode | null
+    const t = saved === "light" ? "light" : "dark"
+    setTheme(t); document.documentElement.setAttribute("data-theme", t)
   }, [])
 
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme)
-    window.localStorage.setItem("nextflow-theme", theme)
-  }, [theme])
-
-  const startEditing = useCallback((e?: React.MouseEvent) => {
-    e?.stopPropagation()
-    setDropdownOpen(false)
-    setEditing(true)
-    setDraft(workflowName)
+  const startEdit = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation(); setDropOpen(false); setEditing(true); setDraft(workflowName)
   }, [workflowName])
 
   const commitRename = useCallback(async () => {
     const trimmed = draft.trim() || "Untitled Workflow"
-    setWorkflowName(trimmed)
-    setDraft(trimmed)
-    setEditing(false)
-
-    // Persist immediately if we have a real workflow ID
-    if (workflowId && workflowId !== "default" && workflowId !== "new" && workflowId !== "sample") {
-      try {
-        await fetch(`/api/workflows/${workflowId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: trimmed }),
-        })
-      } catch (err) {
-        console.error("Failed to save workflow name", err)
-      }
+    setWorkflowName(trimmed); setDraft(trimmed); setEditing(false)
+    if (workflowId && !["default","new","sample"].includes(workflowId)) {
+      try { await fetch(`/api/workflows/${workflowId}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: trimmed }) }) } catch {}
     }
   }, [draft, workflowId, setWorkflowName])
 
-  const cancelEdit = useCallback(() => {
-    setDraft(workflowName)
-    setEditing(false)
-  }, [workflowName])
+  const cancelEdit = useCallback(() => { setDraft(workflowName); setEditing(false) }, [workflowName])
 
   const handleSave = async () => {
-    setDropdownOpen(false)
-    if (!workflowId || workflowId === "default" || workflowId === "new") {
-      const res = await fetch("/api/workflows", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: workflowName,
-          nodes: JSON.parse(JSON.stringify(nodes)),
-          edges: JSON.parse(JSON.stringify(edges)),
-        }),
-      })
-      const data = await res.json()
-      if (data.id) router.push(`/workflow/${data.id}`)
+    setDropOpen(false)
+    if (!workflowId || ["default","new"].includes(workflowId)) {
+      const res = await fetch("/api/workflows", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: workflowName, nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) }) })
+      const d = await res.json(); if (d.id) router.push(`/workflow/${d.id}`)
     } else {
-      await fetch(`/api/workflows/${workflowId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: workflowName,
-          nodes: JSON.parse(JSON.stringify(nodes)),
-          edges: JSON.parse(JSON.stringify(edges)),
-        }),
-      })
+      await fetch(`/api/workflows/${workflowId}`, { method: "PUT", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: workflowName, nodes: JSON.parse(JSON.stringify(nodes)), edges: JSON.parse(JSON.stringify(edges)) }) })
     }
   }
 
   const toggleTheme = () => {
-    setTheme((current) => (current === "dark" ? "light" : "dark"))
+    const next = theme === "dark" ? "light" : "dark"
+    setTheme(next); document.documentElement.setAttribute("data-theme", next); localStorage.setItem("nextflow-theme", next)
   }
 
   return (
-    <div className="absolute top-5 left-5 right-5 h-[56px] flex items-start justify-between px-12 pt-4 z-30 pointer-events-none">
+    <div style={{
+      position: "absolute", top: 0, left: 0, right: 0, height: 52,
+      display: "flex", alignItems: "center", justifyContent: "space-between",
+      padding: "0 12px", zIndex: 30, pointerEvents: "none",
+    }}>
 
-      {/* ── Left: workflow name + dropdown ── */}
-      <div className="pointer-events-auto relative" ref={dropdownRef}>
+      {/* ── Left: name pill ── */}
+      <div style={{ pointerEvents: "auto", position: "relative" }} ref={dropRef}>
         <div
-          className="flex items-center gap-2 px-3 py-1.5 rounded-xl cursor-pointer select-none transition-colors hover:bg-white/[0.06]"
-          style={{
-            minHeight: 36,
-            background: editing ? "rgba(255,255,255,0.08)" : "rgba(255,255,255,0.065)",
-            border: "1px solid rgba(255,255,255,0.05)",
-            boxShadow: "0 8px 30px rgba(0,0,0,0.22)",
-            backdropFilter: "blur(14px)",
-          }}
-          onClick={() => { if (!editing) setDropdownOpen(v => !v) }}
+          style={{ ...pill(editing || dropOpen), padding: "0 8px 0 6px", gap: 6, cursor: editing ? "default" : "pointer" }}
+          onClick={() => { if (!editing) setDropOpen(v => !v) }}
+          onMouseEnter={e => { if (!editing && !dropOpen) hover(e.currentTarget as HTMLElement, true) }}
+          onMouseLeave={e => { if (!editing && !dropOpen) hover(e.currentTarget as HTMLElement, false) }}
         >
-          {/* Brand icon */}
-          <div
-            className="w-4 h-4 rounded-md flex items-center justify-center shrink-0"
-            style={{ background: "transparent" }}
-          >
-            <span style={{ fontSize: 10, color: "var(--text-primary)", fontWeight: 700 }}>N</span>
-          </div>
+          {/* Gradient brand icon */}
+          <div style={{
+            width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+            background: "linear-gradient(135deg,#7c4fff 0%,#4d9de0 100%)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: 9, fontWeight: 700, color: "#fff",
+          }}>N</div>
 
-          {/* ── Editable name ── */}
+          {/* Editable name */}
           {editing ? (
-            <input
-              ref={inputRef}
-              value={draft}
-              onChange={e => setDraft(e.target.value)}
+            <input ref={inputRef} value={draft} onChange={e => setDraft(e.target.value)}
               onBlur={commitRename}
-              onKeyDown={e => {
-                e.stopPropagation()
-                if (e.key === "Enter") { e.preventDefault(); commitRename() }
-                if (e.key === "Escape") cancelEdit()
-              }}
+              onKeyDown={e => { e.stopPropagation(); if (e.key==="Enter") { e.preventDefault(); commitRename() } if (e.key==="Escape") cancelEdit() }}
               onClick={e => e.stopPropagation()}
-              className="bg-transparent text-[13px] font-medium outline-none min-w-[80px] max-w-[200px]"
-              style={{ color: "var(--text-primary)", width: Math.max(80, Math.min(200, draft.length * 8)) }}
-            />
+              style={{ background:"transparent", border:"none", outline:"none",
+                fontSize:12.5, fontWeight:500, color:"var(--text-primary)", fontFamily:"inherit",
+                letterSpacing:"-0.012em", minWidth:80, width: Math.max(80, Math.min(220, draft.length * 8)) }} />
           ) : (
-            <span
-              className="text-[13px] font-medium max-w-[180px] truncate"
-              style={{ color: "var(--text-primary)" }}
-              onDoubleClick={startEditing}
-            >
+            <span onDoubleClick={startEdit}
+              style={{ fontSize:12.5, fontWeight:500, color:"var(--text-primary)", letterSpacing:"-0.012em",
+                maxWidth:200, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
               {workflowName}
             </span>
           )}
 
-          {/* Pencil icon — always visible on hover, always visible while editing */}
-          {!editing && (
-            <button
-              onClick={startEditing}
-              className="opacity-0 group-hover:opacity-100 p-0.5 rounded transition-all hover:bg-white/10"
-              style={{ opacity: 0 }}
-              onMouseEnter={e => (e.currentTarget.style.opacity = "1")}
-              onMouseLeave={e => (e.currentTarget.style.opacity = "0")}
-              title="Rename workflow"
-            >
-              <Pencil size={10} style={{ color: "var(--text-faint)" }} />
-            </button>
-          )}
-
-          {!editing && <ChevronDown size={12} className="shrink-0" style={{ color: "var(--text-faint)" }} />}
+          {!editing && <ChevronDown size={11} style={{ color:"var(--text-ghost)", flexShrink:0 }} />}
         </div>
 
-        {/* ── Dropdown menu ── */}
-        {dropdownOpen && !editing && (
-          <div
-            className="absolute top-[calc(100%+4px)] left-0 rounded-xl overflow-hidden shadow-2xl z-50 min-w-[220px]"
-            style={{ background: "var(--bg-secondary)", border: "0.5px solid var(--border-strong)" }}
-          >
-            {/* Thumbnail preview */}
-            <div className="px-3 pt-3 pb-2">
-              <div className="rounded-lg overflow-hidden mb-2" style={{ height: 80, background: "var(--bg-primary)" }}>
-                <svg viewBox="0 0 220 80" className="w-full h-full">
-                  <rect x="10" y="20" width="50" height="30" rx="6" fill="#1e1e1e" stroke="#4d9de0" strokeWidth="0.75" />
-                  <rect x="85" y="10" width="50" height="30" rx="6" fill="#1e1e1e" stroke="#f5a623" strokeWidth="0.75" />
-                  <rect x="85" y="48" width="50" height="30" rx="6" fill="#1e1e1e" stroke="#a855f7" strokeWidth="0.75" />
-                  <rect x="162" y="28" width="50" height="30" rx="6" fill="#1e1e1e" stroke="#4CAF50" strokeWidth="0.75" />
-                  <path d="M60 35 C72 35 72 25 85 25" stroke="#4d9de0" strokeWidth="1" fill="none" />
-                  <path d="M60 35 C72 35 72 63 85 63" stroke="#4d9de0" strokeWidth="1" fill="none" />
-                  <path d="M135 25 C148 25 150 43 162 43" stroke="#f5a623" strokeWidth="1" fill="none" />
-                  <path d="M135 63 C148 63 150 43 162 43" stroke="#a855f7" strokeWidth="1" fill="none" />
+        {/* Dropdown */}
+        {dropOpen && !editing && (
+          <div style={{
+            position:"absolute", top:"calc(100% + 6px)", left:0, minWidth:228,
+            borderRadius:14, border:"1px solid rgba(255,255,255,0.08)",
+            background:"rgba(11,11,11,0.97)", backdropFilter:"blur(28px)", WebkitBackdropFilter:"blur(28px)",
+            boxShadow:"0 24px 72px rgba(0,0,0,0.80), 0 4px 16px rgba(0,0,0,0.50)",
+            zIndex:9999, overflow:"hidden",
+            animation:"contextMenuIn 0.14s cubic-bezier(0.22,1,0.36,1) both",
+          }}>
+            {/* Mini workflow SVG preview */}
+            <div style={{ padding:"10px 10px 6px" }}>
+              <div style={{ borderRadius:9, overflow:"hidden", background:"rgba(255,255,255,0.024)", border:"1px solid rgba(255,255,255,0.055)", height:68 }}>
+                <svg viewBox="0 0 208 68" style={{ width:"100%", height:"100%" }}>
+                  <rect x="6"   y="18" width="40" height="22" rx="5" fill="#141414" stroke="#0080FF" strokeWidth="0.55" />
+                  <rect x="6"   y="46" width="40" height="14" rx="4" fill="#141414" stroke="#FCC800" strokeWidth="0.5"  />
+                  <rect x="78"  y="10" width="40" height="22" rx="5" fill="#141414" stroke="#FCC800" strokeWidth="0.55" />
+                  <rect x="78"  y="40" width="40" height="22" rx="5" fill="#141414" stroke="#9B6FFF" strokeWidth="0.55" />
+                  <rect x="152" y="24" width="50" height="22" rx="5" fill="#141414" stroke="#29D246" strokeWidth="0.55" />
+                  <path d="M46 29 C62 29 62 21 78 21" stroke="#0080FF" strokeWidth="0.8" fill="none" opacity="0.65"/>
+                  <path d="M46 29 C62 29 62 51 78 51" stroke="#FCC800" strokeWidth="0.8" fill="none" opacity="0.65"/>
+                  <path d="M118 21 C135 21 135 35 152 35" stroke="#FCC800" strokeWidth="0.8" fill="none" opacity="0.65"/>
+                  <path d="M118 51 C135 51 135 35 152 35" stroke="#9B6FFF" strokeWidth="0.8" fill="none" opacity="0.65"/>
                 </svg>
               </div>
             </div>
-
-            <div className="h-px mx-3" style={{ background: "var(--border)" }} />
-
-            <div className="p-1.5 flex flex-col gap-0.5">
-              <button
-                onClick={() => { setDropdownOpen(false); router.push("/nodes") }}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors text-left w-full"
-              >
-                <ArrowLeft size={15} className="text-white/40" />
-                Back
-              </button>
-
-              {/* ── Rename ── */}
-              <button
-                onClick={startEditing}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors text-left w-full"
-              >
-                <Pencil size={15} className="text-white/40" />
-                Rename
-              </button>
-
-              <button
-                onClick={() => setDropdownOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors text-left w-full"
-              >
-                <AppWindow size={15} className="text-blue-400" />
-                Turn Into App
-                <span className="ml-auto text-blue-400"><Check size={13} /></span>
-              </button>
-
-              <button
-                onClick={() => setDropdownOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors text-left w-full"
-              >
-                <Upload size={15} className="text-white/40" />
-                Import
-              </button>
-
-              <button
-                onClick={() => setDropdownOpen(false)}
-                className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors text-left w-full"
-              >
-                <Download size={15} className="text-white/40" />
-                Export
-              </button>
-
-              <div className="h-px mx-1 my-1" style={{ background: "var(--border)" }} />
-
-              <div className="px-3 py-1.5">
-                <span className="text-[11px] uppercase tracking-wider" style={{ color: "var(--text-ghost)" }}>Workspaces</span>
-              </div>
-              <button className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors text-left w-full">
-                <Building2 size={14} className="text-white/40" />
-                Default Workspace
-              </button>
+            <div style={{ height:1, background:"rgba(255,255,255,0.058)", margin:"0 10px" }} />
+            <div style={{ padding:"5px 5px 7px", display:"flex", flexDirection:"column", gap:1 }}>
+              <DI icon={<ArrowLeft size={13}/>}    label="Back"          onClick={() => { setDropOpen(false); router.push("/nodes") }} />
+              <DI icon={<Pencil size={13}/>}       label="Rename"        onClick={startEdit} />
+              <DI icon={<AppWindow size={13} style={{color:"#4d9de0"}}/>} label="Turn Into App"
+                right={<Check size={11} style={{color:"#4d9de0"}}/>}  onClick={() => setDropOpen(false)} />
+              <DI icon={<Upload size={13}/>}        label="Import"       onClick={() => setDropOpen(false)} />
+              <DI icon={<Download size={13}/>}      label="Export"       onClick={() => setDropOpen(false)} />
+              <div style={{ height:1, background:"rgba(255,255,255,0.055)", margin:"3px 4px" }} />
+              <div style={{ padding:"3px 9px", fontSize:10, color:"var(--text-ghost)", letterSpacing:"0.055em", textTransform:"uppercase" }}>Workspaces</div>
+              <DI icon={<Building2 size={13}/>}    label="Default Workspace" onClick={() => setDropOpen(false)} />
             </div>
           </div>
         )}
       </div>
 
-      {/* ── Right controls ── */}
-      <div className="pointer-events-auto flex items-center gap-1.5">
-        <button
-          onClick={toggleTheme}
-          className="h-8 w-8 flex items-center justify-center rounded-[10px] transition-colors"
-          style={{
-            background: "rgba(255,255,255,0.065)",
-            border: "1px solid rgba(255,255,255,0.05)",
-            color: "rgba(255,255,255,0.82)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
-            backdropFilter: "blur(14px)",
-          }}
-          title={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-          aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} theme`}
-        >
-          {theme === "dark" ? <Sun size={15} /> : <Moon size={15} />}
+      {/* ── Right buttons ── */}
+      <div style={{ pointerEvents:"auto", display:"flex", alignItems:"center", gap:5 }}>
+        {/* Theme */}
+        <button onClick={toggleTheme} style={{ ...pill(), width:30, padding:0, justifyContent:"center" }}
+          title={`Switch to ${theme==="dark"?"light":"dark"} mode`}
+          onMouseEnter={e => hover(e.currentTarget as HTMLElement, true)}
+          onMouseLeave={e => hover(e.currentTarget as HTMLElement, false)}>
+          {theme==="dark" ? <Moon size={13}/> : <Sun size={13}/>}
         </button>
-        <button
-          onClick={handleSave}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-[12px] transition-colors"
-          style={{
-            minHeight: 36,
-            background: "rgba(255,255,255,0.065)",
-            border: "1px solid rgba(255,255,255,0.05)",
-            color: "rgba(255,255,255,0.48)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
-            backdropFilter: "blur(14px)",
-          }}
-        >
-          <Share2 size={12} />
-          Save
+
+        {/* Share / Save */}
+        <button onClick={handleSave} style={pill()}
+          onMouseEnter={e => hover(e.currentTarget as HTMLElement, true)}
+          onMouseLeave={e => hover(e.currentTarget as HTMLElement, false)}>
+          <Share2 size={12} style={{ color:"var(--text-ghost)" }}/>
+          Share
         </button>
-        <button
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-[10px] text-[12px] transition-colors"
-          style={{
-            minHeight: 36,
-            background: "rgba(255,255,255,0.065)",
-            border: "1px solid rgba(255,255,255,0.05)",
-            color: "rgba(255,255,255,0.88)",
-            boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
-            backdropFilter: "blur(14px)",
-          }}
-        >
-          <AppWindow size={12} />
+
+        {/* Turn into app */}
+        <button style={pill()}
+          onMouseEnter={e => hover(e.currentTarget as HTMLElement, true)}
+          onMouseLeave={e => hover(e.currentTarget as HTMLElement, false)}>
+          <AppWindow size={12} style={{ color:"var(--text-ghost)" }}/>
           Turn workflow into app
         </button>
-        <div className="relative" ref={panelMenuRef}>
-          <button
-            onClick={() => setPanelMenuOpen(v => !v)}
-            className="flex items-center gap-1 px-2 py-1.5 rounded-[10px] transition-colors"
-            style={{
-              minHeight: 36,
-              background: panelMenuOpen || rightPanel ? "rgba(255,255,255,0.085)" : "rgba(255,255,255,0.065)",
-              border: "1px solid rgba(255,255,255,0.05)",
-              color: "rgba(255,255,255,0.52)",
-              boxShadow: "0 8px 24px rgba(0,0,0,0.18)",
-              backdropFilter: "blur(14px)",
-            }}
-            title="Open right panel"
-            aria-label="Open right panel"
-          >
-            <PanelRight size={13} />
-            <ChevronDown size={11} className={`transition-transform ${panelMenuOpen ? "rotate-180" : ""}`} />
+
+        {/* Panel toggle */}
+        <div style={{ position:"relative" }} ref={panelRef}>
+          <button onClick={() => setPanelOpen(v => !v)}
+            style={{ ...pill(panelOpen || !!rightPanel), padding:"0 8px", gap:4 }}
+            onMouseEnter={e => { if (!panelOpen) hover(e.currentTarget as HTMLElement, true) }}
+            onMouseLeave={e => { if (!panelOpen) hover(e.currentTarget as HTMLElement, false) }}>
+            <PanelRight size={13}/>
+            <ChevronDown size={10} style={{ transition:"transform 0.14s", transform: panelOpen ? "rotate(180deg)" : "none" }}/>
           </button>
 
-          {panelMenuOpen && (
-            <div
-              className="absolute right-0 top-[calc(100%+6px)] min-w-[220px] rounded-xl p-1.5 shadow-2xl z-50"
-              style={{ background: "var(--bg-secondary)", border: "0.5px solid var(--border-strong)" }}
-            >
-              <button
-                onClick={() => {
-                  onRightPanelChange("assets")
-                  setPanelMenuOpen(false)
-                }}
-                className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-left text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
-              >
-                <Database size={15} className="text-white/45" />
-                <span className="text-[13px] font-medium">Assets</span>
-                <span className="ml-auto text-[11px] text-white/30">Ctrl+Alt+A</span>
-              </button>
-              <button
-                onClick={() => {
-                  onRightPanelChange("history")
-                  setPanelMenuOpen(false)
-                }}
-                className="flex items-center gap-3 w-full rounded-lg px-3 py-2.5 text-left text-white/70 hover:text-white hover:bg-white/[0.06] transition-colors"
-              >
-                <History size={15} className="text-white/45" />
-                <span className="text-[13px] font-medium leading-tight">Version History</span>
-                <span className="ml-auto text-[11px] text-white/30">Ctrl+Alt+S</span>
-              </button>
+          {panelOpen && (
+            <div style={{
+              position:"absolute", top:"calc(100% + 6px)", right:0, minWidth:215,
+              borderRadius:12, border:"1px solid rgba(255,255,255,0.08)",
+              background:"rgba(11,11,11,0.97)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)",
+              boxShadow:"0 18px 52px rgba(0,0,0,0.72)", zIndex:9999,
+              animation:"contextMenuIn 0.13s cubic-bezier(0.22,1,0.36,1) both",
+              padding:"5px",
+            }}>
+              <PanelItem icon={<Database size={13}/>} label="Assets"         shortcut="⌃⌥A"
+                active={rightPanel==="assets"}
+                onClick={() => { onRightPanelChange(rightPanel==="assets"?null:"assets"); setPanelOpen(false) }} />
+              <PanelItem icon={<History  size={13}/>} label="Version History" shortcut="⌃⌥S"
+                active={rightPanel==="history"}
+                onClick={() => { onRightPanelChange(rightPanel==="history"?null:"history"); setPanelOpen(false) }} />
             </div>
           )}
         </div>
       </div>
     </div>
+  )
+}
+
+function DI({ icon, label, right, onClick }: { icon: React.ReactNode; label: string; right?: React.ReactNode; onClick?: () => void }) {
+  return (
+    <button onClick={onClick} style={{
+      display:"flex", alignItems:"center", gap:9, width:"100%", padding:"7px 10px",
+      borderRadius:8, border:"none", background:"transparent", cursor:"pointer",
+      textAlign:"left", color:"var(--text-secondary)", fontSize:12.5, letterSpacing:"-0.01em",
+      transition:"background 0.10s, color 0.10s",
+    }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background="rgba(255,255,255,0.052)"; (e.currentTarget as HTMLElement).style.color="var(--text-primary)" }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background="transparent";               (e.currentTarget as HTMLElement).style.color="var(--text-secondary)" }}>
+      <span style={{ color:"var(--text-ghost)", display:"flex", flexShrink:0 }}>{icon}</span>
+      <span style={{ flex:1 }}>{label}</span>
+      {right}
+    </button>
+  )
+}
+
+function PanelItem({ icon, label, shortcut, active, onClick }: { icon: React.ReactNode; label: string; shortcut: string; active?: boolean; onClick: () => void }) {
+  return (
+    <button onClick={onClick} style={{
+      display:"flex", alignItems:"center", gap:9, width:"100%", padding:"7px 10px",
+      borderRadius:8, border:"none", cursor:"pointer", textAlign:"left",
+      background: active ? "rgba(255,255,255,0.055)" : "transparent",
+      color: active ? "var(--text-primary)" : "var(--text-secondary)",
+      fontSize:12.5, letterSpacing:"-0.01em",
+      transition:"background 0.10s, color 0.10s",
+    }}
+      onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background="rgba(255,255,255,0.042)"; (e.currentTarget as HTMLElement).style.color="var(--text-primary)" }}}
+      onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background="transparent";              (e.currentTarget as HTMLElement).style.color="var(--text-secondary)" }}}>
+      <span style={{ color:"var(--text-ghost)", display:"flex", flexShrink:0 }}>{icon}</span>
+      <span style={{ flex:1, fontWeight: active ? 500 : 400 }}>{label}</span>
+      <span style={{ fontSize:10.5, color:"var(--text-ghost)", fontFamily:"monospace" }}>{shortcut}</span>
+    </button>
   )
 }
