@@ -5,10 +5,10 @@ import * as os from "os"
 import * as path from "path"
 import { execFile } from "child_process"
 import { promisify } from "util"
-import ffmpegPath from "ffmpeg-static"
 
 const execFileAsync = promisify(execFile)
-const FFMPEG = process.env.FFMPEG_PATH ?? ffmpegPath ?? "ffmpeg"
+const FFMPEG = process.env.FFMPEG_PATH ?? "ffmpeg"
+const FFPROBE = process.env.FFPROBE_PATH ?? "ffprobe"
 
 const inputSchema = z.object({
   videoUrl: z.string().url(),
@@ -48,13 +48,18 @@ async function uploadToTransloadit(filePath: string, key: string, secret: string
   throw new Error("Upload timed out")
 }
 
-function parseDurationToSeconds(stderr: string): number | null {
-  const match = stderr.match(/Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/)
-  if (!match) return null
-  const hours = Number(match[1] ?? 0)
-  const minutes = Number(match[2] ?? 0)
-  const seconds = Number(match[3] ?? 0)
-  return hours * 3600 + minutes * 60 + seconds
+function parseTimestampInput(timestamp: string): number {
+  const raw = timestamp.trim()
+  if (!raw) return 0
+  if (/^\d+:\d{1,2}:\d{1,2}(?:\.\d+)?$/.test(raw)) {
+    const [hours, minutes, seconds] = raw.split(":")
+    return Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds)
+  }
+  if (/^\d+:\d{1,2}(?:\.\d+)?$/.test(raw)) {
+    const [minutes, seconds] = raw.split(":")
+    return Number(minutes) * 60 + Number(seconds)
+  }
+  return Number(raw) || 0
 }
 
 export const extractFrameTask = task({
@@ -75,24 +80,34 @@ export const extractFrameTask = task({
     if (parsed.timestamp.endsWith("%")) {
       const pct = parseFloat(parsed.timestamp) / 100
       try {
-        const { stderr } = await execFileAsync(FFMPEG, [
-          "-i", inputPath
+        const { stdout } = await execFileAsync(FFPROBE, [
+          "-v", "error",
+          "-show_entries", "format=duration",
+          "-of", "csv=p=0",
+          inputPath,
         ])
-        const duration = parseDurationToSeconds(stderr) ?? 10
+        const duration = parseFloat(stdout.trim()) || 10
         seekSeconds = duration * pct
-      } catch { seekSeconds = 5 }
+      } catch {
+        seekSeconds = 5
+      }
     } else {
-      seekSeconds = parseFloat(parsed.timestamp) || 0
+      seekSeconds = parseTimestampInput(parsed.timestamp)
     }
 
     await execFileAsync(FFMPEG, [
       "-ss", String(seekSeconds),
       "-i", inputPath,
       "-frames:v", "1",
-      "-y", outputPath
+      "-y", outputPath,
     ])
 
-    const outputUrl = await uploadToTransloadit(outputPath, parsed.transloaditKey, parsed.transloaditSecret, parsed.transloaditTemplateId)
+    const outputUrl = await uploadToTransloadit(
+      outputPath,
+      parsed.transloaditKey,
+      parsed.transloaditSecret,
+      parsed.transloaditTemplateId
+    )
     fs.unlinkSync(inputPath)
     if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath)
     return { outputUrl }
