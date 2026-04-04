@@ -24,7 +24,7 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
     // "sample" → load the built-in sample workflow
     if (id === "sample") {
       setWorkflowId("sample")
-      setWorkflowName("SampleWorkflow")
+      setWorkflowName("Product Marketing Kit Generator")
       const { nodes, edges } = getSampleWorkflow()
       setNodes(nodes)
       setEdges(edges)
