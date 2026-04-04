@@ -3,12 +3,7 @@ import { z } from "zod"
 import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
-import { execFile } from "child_process"
-import { promisify } from "util"
-import ffmpegPath from "ffmpeg-static"
-
-const execFileAsync = promisify(execFile)
-const FFMPEG = process.env.FFMPEG_PATH ?? ffmpegPath ?? "ffmpeg"
+import { Jimp } from "jimp"
 
 const inputSchema = z.object({
   imageUrl: z.string().url(),
@@ -57,22 +52,25 @@ export const cropImageTask = task({
   run: async (payload: z.infer<typeof inputSchema>) => {
     const parsed = inputSchema.parse(payload)
     const tmpDir = os.tmpdir()
-    const inputPath = path.join(tmpDir, `input-${Date.now()}.jpg`)
     const outputPath = path.join(tmpDir, `cropped-${Date.now()}.jpg`)
 
     const res = await fetch(parsed.imageUrl)
     const buffer = await res.arrayBuffer()
-    fs.writeFileSync(inputPath, Buffer.from(buffer))
+    const image = await Jimp.read(Buffer.from(buffer))
+    const width = image.bitmap.width
+    const height = image.bitmap.height
 
-    await execFileAsync(FFMPEG, [
-      "-i", inputPath,
-      "-vf",
-      `crop=iw*${parsed.widthPercent}/100:ih*${parsed.heightPercent}/100:iw*${parsed.xPercent}/100:ih*${parsed.yPercent}/100`,
-      "-y", outputPath
-    ])
+    const cropWidth = Math.max(1, Math.round((width * parsed.widthPercent) / 100))
+    const cropHeight = Math.max(1, Math.round((height * parsed.heightPercent) / 100))
+    const maxX = Math.max(0, width - cropWidth)
+    const maxY = Math.max(0, height - cropHeight)
+    const cropX = Math.min(maxX, Math.max(0, Math.round((width * parsed.xPercent) / 100)))
+    const cropY = Math.min(maxY, Math.max(0, Math.round((height * parsed.yPercent) / 100)))
+
+    image.crop({ x: cropX, y: cropY, w: cropWidth, h: cropHeight })
+    await image.write(outputPath as `${string}.${string}`)
 
     const outputUrl = await uploadToTransloadit(outputPath, parsed.transloaditKey, parsed.transloaditSecret, parsed.transloaditTemplateId)
-    fs.unlinkSync(inputPath)
     if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath)
     return { outputUrl }
   },
