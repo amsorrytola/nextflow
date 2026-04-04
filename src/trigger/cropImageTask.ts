@@ -5,10 +5,10 @@ import * as os from "os"
 import * as path from "path"
 import { execFile } from "child_process"
 import { promisify } from "util"
+import ffmpegPath from "ffmpeg-static"
 
 const execFileAsync = promisify(execFile)
-const FFMPEG = process.env.FFMPEG_PATH ?? "ffmpeg"
-const FFPROBE = process.env.FFPROBE_PATH ?? "ffprobe"
+const FFMPEG = process.env.FFMPEG_PATH ?? ffmpegPath ?? "ffmpeg"
 
 const inputSchema = z.object({
   imageUrl: z.string().url(),
@@ -64,27 +64,10 @@ export const cropImageTask = task({
     const buffer = await res.arrayBuffer()
     fs.writeFileSync(inputPath, Buffer.from(buffer))
 
-    // Get dimensions
-    let w = 800, h = 600
-    try {
-      const { stdout } = await execFileAsync(FFPROBE, [
-        "-v", "error", "-select_streams", "v:0",
-        "-show_entries", "stream=width,height",
-        "-of", "csv=p=0", inputPath
-      ])
-      const parts = stdout.trim().split(",")
-      w = parseInt(parts[0] ?? "800") || 800
-      h = parseInt(parts[1] ?? "600") || 600
-    } catch { /* use defaults */ }
-
-    const cropW = Math.max(1, Math.floor(w * parsed.widthPercent / 100))
-    const cropH = Math.max(1, Math.floor(h * parsed.heightPercent / 100))
-    const cropX = Math.floor(w * parsed.xPercent / 100)
-    const cropY = Math.floor(h * parsed.yPercent / 100)
-
     await execFileAsync(FFMPEG, [
       "-i", inputPath,
-      "-vf", `crop=${cropW}:${cropH}:${cropX}:${cropY}`,
+      "-vf",
+      `crop=iw*${parsed.widthPercent}/100:ih*${parsed.heightPercent}/100:iw*${parsed.xPercent}/100:ih*${parsed.yPercent}/100`,
       "-y", outputPath
     ])
 

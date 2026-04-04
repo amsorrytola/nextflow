@@ -5,10 +5,12 @@ import * as os from "os"
 import * as path from "path"
 import { execFile } from "child_process"
 import { promisify } from "util"
+import ffmpegPath from "ffmpeg-static"
+import ffprobeInstaller from "@ffprobe-installer/ffprobe"
 
 const execFileAsync = promisify(execFile)
-const FFMPEG = process.env.FFMPEG_PATH ?? "ffmpeg"
-const FFPROBE = process.env.FFPROBE_PATH ?? "ffprobe"
+const FFMPEG = process.env.FFMPEG_PATH ?? ffmpegPath ?? "ffmpeg"
+const FFPROBE = process.env.FFPROBE_PATH ?? ffprobeInstaller.path
 
 const inputSchema = z.object({
   videoUrl: z.string().url(),
