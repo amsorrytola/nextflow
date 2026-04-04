@@ -3,7 +3,7 @@
 import { useRef } from "react"
 import {
   Plus, MousePointer2, Hand, Scissors, Link2,
-  Undo2, Redo2, Download, Upload, Play, SquarePlay, Loader2, FlaskConical, Keyboard
+  Undo2, Redo2, Download, Upload, Play, SquarePlay, Loader2, FlaskConical, Keyboard, Trash2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useWorkflowStore } from "@/store/workflowStore"
@@ -28,12 +28,13 @@ function createDefaultData(type: NodeType): AnyNodeData {
 
 export function KreaToolbar() {
   const {
-    workflowName, setNodes, setEdges, selectedNodeIds, executionStatus,
+    workflowName, setNodes, setEdges, selectedNodeIds, selectedEdgeIds, removeSelectedElements, executionStatus,
   } = useWorkflowStore()
   const { undo, redo, pastStates, futureStates } = useTemporalStore()
   const importRef = useRef<HTMLInputElement>(null)
 
   const isRunning = Object.values(executionStatus).some(s => s === "running")
+  const hasSelection = selectedNodeIds.length > 0 || selectedEdgeIds.length > 0
   const canUndo = pastStates.length > 0
   const canRedo = futureStates.length > 0
 
@@ -130,6 +131,20 @@ export function KreaToolbar() {
             {selectedNodeIds.length > 0 ? `(${selectedNodeIds.length})` : "Selected"}
           </button>
         )}
+        {hasSelection && (
+          <button
+            disabled={isRunning}
+            onClick={removeSelectedElements}
+            className={cn(
+              "flex items-center gap-1.5 px-2.5 py-1.5 rounded-[11px] text-[12px] transition-colors",
+              isRunning
+                ? "text-white/20 cursor-not-allowed"
+                : "text-red-300/80 hover:text-red-200 hover:bg-red-500/10"
+            )}>
+            <Trash2 size={12} />
+            Delete {selectedNodeIds.length > 0 ? `(${selectedNodeIds.length}${selectedEdgeIds.length > 0 ? ` + ${selectedEdgeIds.length}` : ""})` : `(edge${selectedEdgeIds.length > 1 ? "s" : ""})`}
+          </button>
+        )}
       </div>
 
       {/* Main tools — matches Krea's 4-icon toolbar */}
@@ -138,7 +153,7 @@ export function KreaToolbar() {
         <ToolBtn icon={Plus} label="Add node" />
         <ToolBtn icon={MousePointer2} label="Select (V)" />
         <ToolBtn icon={Hand} label="Pan (H)" />
-        <ToolBtn icon={Scissors} label="Cut" />
+        <ToolBtn icon={Scissors} label="Cut selected" onClick={hasSelection ? removeSelectedElements : undefined} disabled={!hasSelection || isRunning} />
         <ToolBtn icon={Link2} label="Connect" />
       </div>
 

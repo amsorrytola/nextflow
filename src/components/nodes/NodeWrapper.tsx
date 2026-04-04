@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { cn } from "@/lib/utils"
-import { Play, Workflow } from "lucide-react"
+import { Play, Trash2, Workflow } from "lucide-react"
 import { runWorkflowMode } from "@/lib/runWorkflowMode"
 import { useWorkflowStore } from "@/store/workflowStore"
 import type { NodeExecutionStatus } from "@/types"
@@ -32,6 +32,7 @@ export function NodeWrapper({
   const isSuccess = status === "success"
   const isError = status === "error"
   const setSelectedNodeIds = useWorkflowStore((state) => state.setSelectedNodeIds)
+  const removeNode = useWorkflowStore((state) => state.removeNode)
   const [actionsVisible, setActionsVisible] = useState(false)
 
   const outlineColor = isRunning
@@ -173,6 +174,16 @@ export function NodeWrapper({
                 void runWorkflowMode("SINGLE", [nodeId])
               }}
             />
+            <HoverAction
+              label="Delete node"
+              icon={<Trash2 size={12} />}
+              disabled={isRunning}
+              variant="danger"
+              onClick={(event) => {
+                event.stopPropagation()
+                removeNode(nodeId)
+              }}
+            />
           </div>
         )}
 
@@ -211,7 +222,7 @@ function HoverAction({
   icon: React.ReactNode
   onClick: (event: React.MouseEvent<HTMLButtonElement>) => void
   disabled?: boolean
-  variant: "primary" | "secondary"
+  variant: "primary" | "secondary" | "danger"
 }) {
   return (
     <button
@@ -221,12 +232,25 @@ function HoverAction({
         disabled ? "cursor-not-allowed opacity-60" : "hover:brightness-110"
       )}
       style={{
-        background: variant === "primary" ? "#1f7aff" : "#0d0d0d",
-        border: variant === "primary" ? "1px solid rgba(255,255,255,0.14)" : "1px solid rgba(255,255,255,0.08)",
+        background:
+          variant === "primary"
+            ? "#1f7aff"
+            : variant === "danger"
+            ? "rgba(127,29,29,0.94)"
+            : "#0d0d0d",
+        border:
+          variant === "primary"
+            ? "1px solid rgba(255,255,255,0.14)"
+            : variant === "danger"
+            ? "1px solid rgba(248,113,113,0.18)"
+            : "1px solid rgba(255,255,255,0.08)",
         color: "white",
-        boxShadow: variant === "primary"
-          ? "0 10px 24px rgba(31,122,255,0.26)"
-          : "0 10px 24px rgba(0,0,0,0.28)",
+        boxShadow:
+          variant === "primary"
+            ? "0 10px 24px rgba(31,122,255,0.26)"
+            : variant === "danger"
+            ? "0 10px 24px rgba(127,29,29,0.24)"
+            : "0 10px 24px rgba(0,0,0,0.28)",
         backdropFilter: "blur(12px)",
       }}
       onClick={onClick}
