@@ -3,7 +3,7 @@ import { z } from "zod"
 import * as fs from "fs"
 import * as os from "os"
 import * as path from "path"
-import { Jimp } from "jimp"
+import sharp from "sharp"
 
 const inputSchema = z.object({
   imageUrl: z.string().url(),
@@ -56,9 +56,14 @@ export const cropImageTask = task({
 
     const res = await fetch(parsed.imageUrl)
     const buffer = await res.arrayBuffer()
-    const image = await Jimp.read(Buffer.from(buffer))
-    const width = image.bitmap.width
-    const height = image.bitmap.height
+    const inputBuffer = Buffer.from(buffer)
+    const metadata = await sharp(inputBuffer).metadata()
+    const width = metadata.width ?? 0
+    const height = metadata.height ?? 0
+
+    if (!width || !height) {
+      throw new Error("Could not determine image dimensions")
+    }
 
     const cropWidth = Math.max(1, Math.round((width * parsed.widthPercent) / 100))
     const cropHeight = Math.max(1, Math.round((height * parsed.heightPercent) / 100))
@@ -67,8 +72,10 @@ export const cropImageTask = task({
     const cropX = Math.min(maxX, Math.max(0, Math.round((width * parsed.xPercent) / 100)))
     const cropY = Math.min(maxY, Math.max(0, Math.round((height * parsed.yPercent) / 100)))
 
-    image.crop({ x: cropX, y: cropY, w: cropWidth, h: cropHeight })
-    await image.write(outputPath as `${string}.${string}`)
+    await sharp(inputBuffer)
+      .extract({ left: cropX, top: cropY, width: cropWidth, height: cropHeight })
+      .jpeg()
+      .toFile(outputPath)
 
     const outputUrl = await uploadToTransloadit(outputPath, parsed.transloaditKey, parsed.transloaditSecret, parsed.transloaditTemplateId)
     if (fs.existsSync(outputPath)) fs.unlinkSync(outputPath)
