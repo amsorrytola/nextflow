@@ -1,8 +1,8 @@
 "use client"
 
 import { useState } from "react"
-import { cn } from "@/lib/utils"
 import { Play, Trash2, Workflow } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { runWorkflowMode } from "@/lib/runWorkflowMode"
 import { useWorkflowStore } from "@/store/workflowStore"
 import type { NodeExecutionStatus } from "@/types"
@@ -24,76 +24,85 @@ export function NodeWrapper({
   className,
   title,
   icon,
-  accentColor = "#a855f7",
+  accentColor = "#9B6FFF",
   titleColor,
   nodeId,
 }: NodeWrapperProps) {
+  const [hovered, setHovered] = useState(false)
+  const setSelectedNodeIds = useWorkflowStore(s => s.setSelectedNodeIds)
+  const removeNode = useWorkflowStore(s => s.removeNode)
+
   const isRunning = status === "running"
   const isSuccess = status === "success"
-  const isError = status === "error"
-  const setSelectedNodeIds = useWorkflowStore((state) => state.setSelectedNodeIds)
-  const removeNode = useWorkflowStore((state) => state.removeNode)
-  const [actionsVisible, setActionsVisible] = useState(false)
+  const isError   = status === "error"
 
-  const outlineColor = isRunning
-    ? accentColor
-    : isSuccess
-    ? "#4CAF50"
-    : isError
-    ? "#ef4444"
-    : "transparent"
-
-  const shadowColor = isRunning
-    ? accentColor
-    : isSuccess
-    ? "#4CAF50"
-    : isError
-    ? "#ef4444"
-    : "transparent"
+  const accent = isRunning ? accentColor : isSuccess ? "#29D246" : isError ? "#FF4545" : "transparent"
+  const glowAlpha = isRunning ? "55" : isSuccess ? "30" : isError ? "35" : "00"
+  const borderAlpha = isRunning ? "80" : isSuccess ? "55" : isError ? "65" : "00"
 
   return (
     <div
       className="flex flex-col"
-      style={{ minWidth: 272, maxWidth: 340 }}
-      onMouseEnter={() => setActionsVisible(true)}
-      onMouseLeave={() => setActionsVisible(false)}
+      style={{ minWidth: 264, maxWidth: 340 }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
     >
+      {/* ── Hover actions (left side) ── */}
+      {nodeId && (
+        <div
+          className="absolute top-0 left-0 z-30 flex flex-col gap-1.5"
+          style={{
+            transform: hovered ? "translateX(calc(-100% - 10px))" : "translateX(calc(-100% - 4px))",
+            opacity: hovered ? 1 : 0,
+            pointerEvents: hovered ? "auto" : "none",
+            transition: "transform 0.18s cubic-bezier(0.34,1.56,0.64,1), opacity 0.15s ease",
+            paddingTop: 2,
+          }}
+          onMouseEnter={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+        >
+          <ActionPill label="Run workflow" icon={<Workflow size={11} />} color="#1f7aff"
+            disabled={isRunning}
+            onClick={e => { e.stopPropagation(); void runWorkflowMode("FULL") }} />
+          <ActionPill label="Run node" icon={<Play size={11} fill="currentColor" />} color="#2a2a2a"
+            disabled={isRunning}
+            onClick={e => { e.stopPropagation(); setSelectedNodeIds([nodeId]); void runWorkflowMode("SINGLE", [nodeId]) }} />
+          <ActionPill label="Delete" icon={<Trash2 size={11} />} color="#3a1414"
+            textColor="#ff6b6b"
+            disabled={isRunning}
+            onClick={e => { e.stopPropagation(); removeNode(nodeId) }} />
+        </div>
+      )}
+
+      {/* ── Card ── */}
       <div
-        className={cn(
-          "rounded-[16px] relative overflow-visible transition-all duration-300",
-          className
-        )}
+        className={cn("relative overflow-visible", className)}
         style={{
-          background:
-            "linear-gradient(180deg, color-mix(in srgb, var(--bg-node) 94%, white 6%) 0%, var(--bg-node) 100%)",
-          border: `1px solid ${
-            isRunning || isSuccess || isError
-              ? outlineColor + "60"
-              : "var(--border)"
-          }`,
-          boxShadow:
-            isRunning
-              ? `0 0 0 1px ${shadowColor}40, 0 0 20px ${shadowColor}30, 0 0 40px ${shadowColor}15`
-              : isSuccess
-              ? `0 0 0 1px ${shadowColor}30, 0 0 12px ${shadowColor}20`
-              : isError
-              ? `0 0 0 1px ${shadowColor}40, 0 0 12px ${shadowColor}25`
-              : "0 16px 40px rgba(0,0,0,0.22), 0 2px 10px rgba(0,0,0,0.18)",
-          outline: isRunning ? `2px solid ${outlineColor}` : "none",
-          outlineOffset: 1,
-          transition:
-            "border-color 0.25s ease-out, box-shadow 0.25s ease-out, outline 0.25s ease-out, transform 0.2s ease-out",
-          transform: actionsVisible ? "translateY(-1px)" : "translateY(0px)",
+          borderRadius: 16,
+          background: "var(--bg-node)",
+          border: `1px solid ${isRunning || isSuccess || isError
+            ? `${accent}${borderAlpha}`
+            : "var(--border-node)"}`,
+          boxShadow: isRunning || isSuccess || isError
+            ? `0 0 0 1px ${accent}${borderAlpha}, 0 0 28px ${accent}${glowAlpha}, 0 20px 60px rgba(0,0,0,0.55)`
+            : hovered
+            ? "0 20px 60px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.35)"
+            : "0 12px 40px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.25)",
+          transform: hovered ? "translateY(-1px)" : "translateY(0px)",
+          transition: "box-shadow 0.22s ease, border-color 0.22s ease, transform 0.18s ease",
+          outline: isRunning ? `1.5px solid ${accent}60` : "none",
+          outlineOffset: 2,
         }}
       >
+        {/* ── Header ── */}
         <div
-          className="node-drag-handle flex items-center justify-between gap-3 px-3.5 py-2.5"
+          className="node-drag-handle flex items-center justify-between px-3.5 py-2.5"
           style={{
-            borderBottom: "1px solid color-mix(in srgb, var(--border) 88%, transparent)",
-            background:
-              "linear-gradient(180deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.015) 100%)",
-            borderTopLeftRadius: 16,
-            borderTopRightRadius: 16,
+            borderBottom: "1px solid var(--border)",
+            borderTopLeftRadius: 15,
+            borderTopRightRadius: 15,
+            background: "linear-gradient(180deg, var(--bg-node-header) 0%, var(--bg-node) 100%)",
+            cursor: "grab",
           }}
         >
           <div className="flex items-center gap-2 min-w-0">
@@ -103,158 +112,111 @@ export function NodeWrapper({
                 width: 20,
                 height: 20,
                 borderRadius: 8,
+                background: `${titleColor ?? accentColor}16`,
+                border: `1px solid ${titleColor ?? accentColor}28`,
                 color: titleColor ?? accentColor,
-                background: `${titleColor ?? accentColor}14`,
-                border: `1px solid ${titleColor ?? accentColor}22`,
               }}
             >
               {icon}
             </span>
-            <div className="min-w-0">
-              <div
-                className="text-[12px] font-medium truncate"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {title}
-              </div>
-            </div>
+            <span
+              className="text-[12.5px] font-medium truncate"
+              style={{ color: "var(--text-primary)", letterSpacing: "-0.01em" }}
+            >
+              {title}
+            </span>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Status dot + drag grip */}
+          <div className="flex items-center gap-2.5 shrink-0">
             <span
               style={{
-                width: 6,
-                height: 6,
+                width: 5.5,
+                height: 5.5,
                 borderRadius: 999,
-                background: isRunning ? accentColor : isSuccess ? "#4CAF50" : isError ? "#ef4444" : "rgba(255,255,255,0.18)",
-                boxShadow: isRunning ? `0 0 10px ${accentColor}80` : "none",
+                background: isRunning ? accentColor
+                  : isSuccess ? "#29D246"
+                  : isError   ? "#FF4545"
+                  : "rgba(255,255,255,0.14)",
+                boxShadow: isRunning ? `0 0 8px ${accentColor}90` : "none",
+                transition: "background 0.2s ease, box-shadow 0.2s ease",
               }}
             />
-            <div
-              aria-hidden="true"
-              className="flex flex-col gap-[3px]"
-              style={{ opacity: 0.42 }}
-            >
-              <span style={{ width: 3, height: 3, borderRadius: 999, background: "var(--text-faint)" }} />
-              <span style={{ width: 3, height: 3, borderRadius: 999, background: "var(--text-faint)" }} />
-              <span style={{ width: 3, height: 3, borderRadius: 999, background: "var(--text-faint)" }} />
-            </div>
+            <DragGrip />
           </div>
         </div>
 
-        {nodeId && (
-          <div
-            className="absolute left-0 top-3 z-30 flex flex-col gap-2 transition-all duration-150"
-            style={{
-              transform: actionsVisible ? "translateX(-92px)" : "translateX(-84px)",
-              opacity: actionsVisible ? 1 : 0,
-              pointerEvents: actionsVisible ? "auto" : "none",
-            }}
-            onMouseEnter={() => setActionsVisible(true)}
-            onMouseLeave={() => setActionsVisible(false)}
-          >
-            <HoverAction
-              label="Run workflow"
-              icon={<Workflow size={12} fill="currentColor" />}
-              disabled={isRunning}
-              variant="primary"
-              onClick={(event) => {
-                event.stopPropagation()
-                void runWorkflowMode("FULL")
-              }}
-            />
-            <HoverAction
-              label="Run node"
-              icon={<Play size={12} fill="currentColor" />}
-              disabled={isRunning}
-              variant="secondary"
-              onClick={(event) => {
-                event.stopPropagation()
-                setSelectedNodeIds([nodeId])
-                void runWorkflowMode("SINGLE", [nodeId])
-              }}
-            />
-            <HoverAction
-              label="Delete node"
-              icon={<Trash2 size={12} />}
-              disabled={isRunning}
-              variant="danger"
-              onClick={(event) => {
-                event.stopPropagation()
-                removeNode(nodeId)
-              }}
-            />
-          </div>
-        )}
+        {/* ── Body ── */}
+        <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: 10 }}>
+          {children}
+        </div>
 
-        {/* Running pulse ring */}
+        {/* ── Pulse ring when running ── */}
         {isRunning && (
           <div
-            className="absolute inset-0 rounded-[16px] pointer-events-none"
+            className="absolute pointer-events-none"
             style={{
-              animation: "krea-pulse-ring 1.5s ease-out infinite",
+              inset: -1,
+              borderRadius: 17,
               border: `1px solid ${accentColor}`,
+              animation: "krea-pulse-ring 1.6s ease-out infinite",
             }}
           />
         )}
-
-        <div className="p-3.5 flex flex-col gap-3">{children}</div>
       </div>
-
-      <style>{`
-        @keyframes krea-pulse-ring {
-          0%   { opacity: 0.8; transform: scale(1); }
-          100% { opacity: 0;   transform: scale(1.04); }
-        }
-      `}</style>
     </div>
   )
 }
 
-function HoverAction({
-  label,
-  icon,
-  onClick,
-  disabled,
-  variant,
-}: {
+function DragGrip() {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 2.5, opacity: 0.28 }}>
+      {[0,1,2].map(i => (
+        <div key={i} style={{ display: "flex", gap: 2.5 }}>
+          {[0,1].map(j => (
+            <div key={j} style={{ width: 2.5, height: 2.5, borderRadius: 99, background: "var(--text-primary)" }} />
+          ))}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ActionPill({ label, icon, color, textColor, disabled, onClick }: {
   label: string
   icon: React.ReactNode
-  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void
+  color: string
+  textColor?: string
   disabled?: boolean
-  variant: "primary" | "secondary" | "danger"
+  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void
 }) {
   return (
     <button
       type="button"
-      className={cn(
-        "nodrag flex items-center gap-2 rounded-[12px] pl-3 pr-3.5 py-2 text-[12px] font-medium shadow-lg transition-all whitespace-nowrap",
-        disabled ? "cursor-not-allowed opacity-60" : "hover:brightness-110"
-      )}
-      style={{
-        background:
-          variant === "primary"
-            ? "#1f7aff"
-            : variant === "danger"
-            ? "rgba(127,29,29,0.94)"
-            : "#0d0d0d",
-        border:
-          variant === "primary"
-            ? "1px solid rgba(255,255,255,0.14)"
-            : variant === "danger"
-            ? "1px solid rgba(248,113,113,0.18)"
-            : "1px solid rgba(255,255,255,0.08)",
-        color: "white",
-        boxShadow:
-          variant === "primary"
-            ? "0 10px 24px rgba(31,122,255,0.26)"
-            : variant === "danger"
-            ? "0 10px 24px rgba(127,29,29,0.24)"
-            : "0 10px 24px rgba(0,0,0,0.28)",
-        backdropFilter: "blur(12px)",
-      }}
-      onClick={onClick}
       disabled={disabled}
+      onClick={onClick}
+      className="nodrag"
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        padding: "6px 12px 6px 10px",
+        borderRadius: 10,
+        background: color,
+        border: "1px solid rgba(255,255,255,0.1)",
+        color: textColor ?? "rgba(255,255,255,0.88)",
+        fontSize: 11.5,
+        fontWeight: 500,
+        whiteSpace: "nowrap",
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
+        boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
+        backdropFilter: "blur(12px)",
+        transition: "filter 0.12s ease",
+        letterSpacing: "-0.01em",
+      }}
+      onMouseEnter={e => { if (!disabled) (e.currentTarget as HTMLElement).style.filter = "brightness(1.12)" }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter = "brightness(1)" }}
     >
       {icon}
       <span>{label}</span>

@@ -1,74 +1,102 @@
 @import "tailwindcss";
 
+/* ─── Krea Design Tokens ─── */
 :root {
-  --bg-primary: #101010;
-  --bg-secondary: #1a1a1a;
-  --bg-node: #1c1c1c;
-  --bg-sidebar: #141414;
-  --bg-elevated: rgba(255,255,255,0.06);
+  --bg-base:     #080808;
+  --bg-surface:  #0e0e0e;
+  --bg-node:     #141414;
+  --bg-node-header: #191919;
+  --bg-elevated: rgba(255,255,255,0.055);
   --bg-elevated-hover: rgba(255,255,255,0.08);
-  --border: rgba(255,255,255,0.07);
-  --border-strong: rgba(255,255,255,0.1);
-  --text-primary: #e8e8e8;
-  --text-secondary: #8a8a8a;
-  --text-muted: #444444;
-  --text-soft: rgba(255,255,255,0.7);
-  --text-faint: rgba(255,255,255,0.4);
-  --text-ghost: rgba(255,255,255,0.25);
-  --panel-backdrop: rgba(16,16,16,0.98);
-  --selection-bg: rgba(168,85,247,0.06);
-  --selection-border: rgba(168,85,247,0.4);
-  /* Krea exact handle/edge colors */
-  --handle-blue: #0080FF;
-  --handle-green: #29D246;
+  --bg-input:    rgba(255,255,255,0.04);
+  --bg-input-hover: rgba(255,255,255,0.065);
+
+  --border:       rgba(255,255,255,0.06);
+  --border-node:  rgba(255,255,255,0.08);
+  --border-strong: rgba(255,255,255,0.12);
+  --border-input: rgba(255,255,255,0.07);
+
+  --text-primary:   rgba(255,255,255,0.92);
+  --text-secondary: rgba(255,255,255,0.55);
+  --text-muted:     rgba(255,255,255,0.30);
+  --text-ghost:     rgba(255,255,255,0.18);
+  --text-soft:      rgba(255,255,255,0.72);
+  --text-faint:     rgba(255,255,255,0.38);
+
+  --panel-backdrop: rgba(10,10,10,0.97);
+  --selection-bg:   rgba(99,102,241,0.08);
+  --selection-border: rgba(99,102,241,0.35);
+
+  /* Krea exact handle colors */
   --handle-yellow: #FCC800;
-  --handle-purple: #a855f7;
-  --accent: #a855f7;
+  --handle-blue:   #0080FF;
+  --handle-green:  #29D246;
+  --handle-purple: #9B6FFF;
+  --accent:        #9B6FFF;
 }
 
 [data-theme="light"] {
-  --bg-primary: #f5f5f2;
-  --bg-secondary: #ffffff;
-  --bg-node: #ffffff;
-  --bg-sidebar: #faf9f7;
-  --bg-elevated: rgba(17,24,39,0.05);
-  --bg-elevated-hover: rgba(17,24,39,0.08);
-  --border: rgba(17,24,39,0.1);
-  --border-strong: rgba(17,24,39,0.14);
-  --text-primary: #111827;
-  --text-secondary: #374151;
-  --text-muted: #6b7280;
-  --text-soft: rgba(17,24,39,0.76);
-  --text-faint: rgba(17,24,39,0.5);
-  --text-ghost: rgba(17,24,39,0.34);
-  --panel-backdrop: rgba(250,249,247,0.96);
-  --selection-bg: rgba(168,85,247,0.09);
-  --selection-border: rgba(168,85,247,0.32);
+  --bg-base:     #f0efe9;
+  --bg-surface:  #f7f6f1;
+  --bg-node:     #ffffff;
+  --bg-node-header: #fafaf8;
+  --bg-elevated: rgba(0,0,0,0.04);
+  --bg-elevated-hover: rgba(0,0,0,0.065);
+  --bg-input:    rgba(0,0,0,0.035);
+  --bg-input-hover: rgba(0,0,0,0.055);
+
+  --border:       rgba(0,0,0,0.08);
+  --border-node:  rgba(0,0,0,0.1);
+  --border-strong: rgba(0,0,0,0.15);
+  --border-input: rgba(0,0,0,0.09);
+
+  --text-primary:   rgba(0,0,0,0.90);
+  --text-secondary: rgba(0,0,0,0.55);
+  --text-muted:     rgba(0,0,0,0.35);
+  --text-ghost:     rgba(0,0,0,0.22);
+  --text-soft:      rgba(0,0,0,0.72);
+  --text-faint:     rgba(0,0,0,0.40);
+
+  --panel-backdrop: rgba(247,246,241,0.97);
+  --selection-bg:   rgba(99,102,241,0.07);
+  --selection-border: rgba(99,102,241,0.30);
 }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+/* ─── Reset ─── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { height: 100%; }
 
 body {
-  background: var(--bg-primary);
+  height: 100%;
+  background: var(--bg-base);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
-  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text", system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  transition: background-color 0.2s ease, color 0.2s ease;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+  text-rendering: optimizeLegibility;
 }
 
-/* ─── React Flow Core Overrides ─── */
-
-/* Canvas background */
+/* ─── React Flow canvas ─── */
 .react-flow {
-  background: var(--bg-primary) !important;
+  background: var(--bg-base) !important;
 }
-
 .react-flow__background {
-  background: var(--bg-primary) !important;
+  background: var(--bg-base) !important;
+}
+.react-flow__background pattern circle,
+.react-flow__background pattern rect {
+  fill: rgba(255,255,255,0.07) !important;
+}
+[data-theme="light"] .react-flow__background pattern circle,
+[data-theme="light"] .react-flow__background pattern rect {
+  fill: rgba(0,0,0,0.09) !important;
 }
 
-/* Remove default white node box-shadow/border */
+/* ─── Node container: no border, no bg, no shadow from RF ─── */
 .react-flow__node {
   border: none !important;
   box-shadow: none !important;
@@ -76,114 +104,150 @@ body {
   border-radius: 0 !important;
   cursor: default !important;
 }
-
-/* CRITICAL: remove selected node's default purple ring (we handle it ourselves) */
+.react-flow__node:focus,
+.react-flow__node:focus-visible,
 .react-flow__node.selected > * {
   outline: none !important;
   box-shadow: none !important;
 }
-.react-flow__node:hover > * {
-  filter: brightness(1.03);
-}
-.react-flow__node:focus {
-  outline: none !important;
-}
-.react-flow__node:focus-visible {
-  outline: none !important;
+.react-flow__node:hover > div {
+  filter: brightness(1.035);
+  transition: filter 0.15s ease;
 }
 
-.node-drag-handle {
-  cursor: grab !important;
-  user-select: none;
-}
-
-.node-drag-handle:active {
-  cursor: grabbing !important;
-}
-
-/* Handles */
+/* ─── Handles ─── */
 .react-flow__handle {
   border-radius: 50% !important;
-  transition: width 0.15s ease, height 0.15s ease !important;
+  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
   cursor: crosshair !important;
 }
 .react-flow__handle:hover {
-  width: 13px !important;
-  height: 13px !important;
+  transform: scale(1.35) !important;
 }
 
-/* ─── CRITICAL: Kill ALL edge dashing globally ─── */
-/* ReactFlow's animated edge class adds a CSS dash animation — we kill it here */
+/* ─── Edges: kill all dashing globally ─── */
 .react-flow__edge path,
-.react-flow__edge-path {
+.react-flow__edge-path,
+.react-flow__edge.animated path,
+.react-flow__edge.animated .react-flow__edge-path {
   stroke-dasharray: none !important;
   stroke-dashoffset: 0 !important;
   animation: none !important;
 }
-.react-flow__edge.animated path,
-.react-flow__edge.animated .react-flow__edge-path {
-  stroke-dasharray: none !important;
-  animation: none !important;
-}
 
-/* Connection line while dragging — solid, clean */
+/* ─── Connection line (while dragging) ─── */
 .react-flow__connection-path {
-  stroke: color-mix(in srgb, var(--text-primary) 30%, transparent) !important;
+  stroke: rgba(255,255,255,0.25) !important;
   stroke-width: 1.5px !important;
   stroke-dasharray: none !important;
   animation: none !important;
 }
 
-/* Edge selection */
-.react-flow__edge.selected path {
-  opacity: 1 !important;
-}
-
-/* Controls panel */
+/* ─── Controls ─── */
 .react-flow__controls {
-  background: var(--bg-secondary) !important;
-  border: 0.5px solid var(--border) !important;
-  border-radius: 10px !important;
+  background: #111 !important;
+  border: 0.5px solid rgba(255,255,255,0.07) !important;
+  border-radius: 12px !important;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
 }
 .react-flow__controls-button {
-  background: var(--bg-secondary) !important;
-  border-bottom: 0.5px solid var(--border) !important;
-  color: var(--text-faint) !important;
-  fill: var(--text-faint) !important;
+  background: transparent !important;
+  border-bottom: 0.5px solid rgba(255,255,255,0.05) !important;
+  color: rgba(255,255,255,0.35) !important;
+  fill: rgba(255,255,255,0.35) !important;
+  transition: background 0.12s ease, fill 0.12s ease !important;
+  width: 28px !important;
+  height: 28px !important;
 }
 .react-flow__controls-button:hover {
-  background: var(--bg-elevated-hover) !important;
-  fill: var(--text-soft) !important;
+  background: rgba(255,255,255,0.05) !important;
+  fill: rgba(255,255,255,0.7) !important;
+}
+[data-theme="light"] .react-flow__controls {
+  background: #fff !important;
+  border-color: rgba(0,0,0,0.08) !important;
+}
+[data-theme="light"] .react-flow__controls-button {
+  color: rgba(0,0,0,0.4) !important;
+  fill: rgba(0,0,0,0.4) !important;
+  border-bottom-color: rgba(0,0,0,0.05) !important;
+}
+[data-theme="light"] .react-flow__controls-button:hover {
+  background: rgba(0,0,0,0.04) !important;
+  fill: rgba(0,0,0,0.75) !important;
 }
 
-/* Minimap */
+/* ─── MiniMap ─── */
 .react-flow__minimap {
-  background: var(--bg-secondary) !important;
-  border: 0.5px solid var(--border) !important;
-  border-radius: 10px !important;
+  background: #0e0e0e !important;
+  border: 0.5px solid rgba(255,255,255,0.07) !important;
+  border-radius: 12px !important;
   overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
 }
-.react-flow__minimap-svg {
-  background: var(--bg-secondary) !important;
+.react-flow__minimap-svg { background: transparent !important; }
+[data-theme="light"] .react-flow__minimap {
+  background: #f7f6f1 !important;
+  border-color: rgba(0,0,0,0.08) !important;
 }
 
-/* Selection box */
+/* ─── Selection box ─── */
 .react-flow__selection {
   background: var(--selection-bg) !important;
   border: 1px solid var(--selection-border) !important;
+  border-radius: 4px !important;
 }
 
-/* ─── Animations ─── */
+/* ─── Edge selected ─── */
+.react-flow__edge.selected path { opacity: 1 !important; }
 
+/* ─── Node drag handle cursor ─── */
+.node-drag-handle { cursor: grab !important; }
+.node-drag-handle:active { cursor: grabbing !important; }
+
+/* ─── Keyframes ─── */
+@keyframes krea-pulse-ring {
+  0%   { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 0;   transform: scale(1.05); }
+}
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 /* ─── Scrollbars ─── */
-::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--text-primary) 18%, transparent); border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--text-primary) 28%, transparent); }
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.12);
+  border-radius: 99px;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.14); }
+
+/* ─── Input resets ─── */
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+}
+select option {
+  background: #1a1a1a;
+  color: rgba(255,255,255,0.85);
+}
+[data-theme="light"] select option {
+  background: #fff;
+  color: #111;
+}
+
+/* ─── Focus rings: off by default, subtle on keyboard nav ─── */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
