@@ -11,7 +11,7 @@ import {
   type IsValidConnection,
   type Edge,
   type EdgeTypes,
-  getSmoothStepPath,
+  getBezierPath,
   type EdgeProps,
   useReactFlow,
 } from "@xyflow/react"
@@ -56,212 +56,212 @@ const HANDLE_TYPES: Record<string, "text" | "image" | "video"> = {
   "extractFrameNode:timestamp": "text",
 }
 
+// Exact Krea edge colors
 const DATA_TYPE_COLORS: Record<string, string> = {
-  text: "#FCC800",
-  image: "#0080FF",
-  video: "#29D246",
+  text:  "#FCC800",   // prompt/text — Krea gold
+  image: "#0080FF",   // image — Krea blue
+  video: "#29D246",   // video — Krea green
 }
 
+// ─── Krea-style tubular bezier edge ─────────────────────────────────────────
+// Renders: glow halo + core stroke + animated flow tubes + travel dot
 function KreaEdge({
   id,
-  sourceX,
-  sourceY,
-  targetX,
-  targetY,
-  sourcePosition,
-  targetPosition,
-  data,
-  selected,
+  sourceX, sourceY,
+  targetX, targetY,
+  sourcePosition, targetPosition,
+  data, selected,
 }: EdgeProps) {
-  const color = (data?.color as string) ?? "#FCC800"
+  const color   = (data?.color   as string)  ?? "#FCC800"
   const isActive = (data?.isActive as boolean) ?? false
-  const isDone = (data?.isDone as boolean) ?? false
+  const isDone   = (data?.isDone  as boolean) ?? false
 
-  const [edgePath] = getSmoothStepPath({
-    sourceX,
-    sourceY,
-    sourcePosition,
-    targetX,
-    targetY,
-    targetPosition,
-    borderRadius: 16,
+  const [edgePath] = getBezierPath({
+    sourceX, sourceY, sourcePosition,
+    targetX, targetY, targetPosition,
+    curvature: 0.42,      // Krea uses a gentler, natural-feeling curve
   })
 
-  const opacity = isActive ? 1 : isDone ? 0.85 : selected ? 0.9 : 0.55
+  // Opacity tiers
+  const baseOpacity = isActive ? 1 : isDone ? 0.80 : selected ? 0.85 : 0.48
 
   return (
-    <>
-      {(isActive || selected) && (
-        <path
-          d={edgePath}
-          fill="none"
-          stroke={color}
-          strokeWidth={isActive ? 10 : 6}
-          opacity={isActive ? 0.2 : 0.1}
-          style={{ filter: `blur(${isActive ? 8 : 4}px)`, pointerEvents: "none" }}
-        />
-      )}
+    <g>
+      {/* ① Wide glow halo — always visible but faint, strong when active */}
       <path
         d={edgePath}
         fill="none"
         stroke={color}
-        strokeWidth={isActive ? 2 : 1.5}
-        opacity={opacity}
-        strokeLinecap="round"
-        strokeLinejoin="round"
+        strokeWidth={isActive ? 14 : selected ? 8 : 5}
+        opacity={isActive ? 0.18 : selected ? 0.10 : 0.055}
         style={{
-          filter: isActive ? `drop-shadow(0 0 4px ${color}bb)` : "none",
-          transition: "opacity 0.3s ease, stroke-width 0.2s ease",
+          filter: `blur(${isActive ? 9 : 4}px)`,
           pointerEvents: "none",
+          transition: "opacity 0.3s ease, stroke-width 0.25s ease",
         }}
       />
+
+      {/* ② Tubular core — the "pipe" body */}
+      <path
+        d={edgePath}
+        fill="none"
+        stroke={color}
+        strokeWidth={isActive ? 2.2 : 1.6}
+        strokeLinecap="round"
+        opacity={baseOpacity}
+        style={{
+          pointerEvents: "none",
+          filter: isActive ? `drop-shadow(0 0 5px ${color}aa)` : "none",
+          transition: "opacity 0.3s ease, stroke-width 0.22s ease, filter 0.25s ease",
+        }}
+      />
+
+      {/* ③ Inner highlight — thin bright line giving the "tube" illusion */}
+      <path
+        d={edgePath}
+        fill="none"
+        stroke="rgba(255,255,255,0.22)"
+        strokeWidth={isActive ? 0.7 : 0.5}
+        strokeLinecap="round"
+        opacity={isActive ? 0.55 : baseOpacity * 0.45}
+        style={{ pointerEvents: "none", transition: "opacity 0.3s ease" }}
+      />
+
+      {/* ④ Animated flow — only when running */}
       {isActive && (
-        <circle r="3.5" fill={color} opacity={0.95}>
-          <animateMotion dur="1s" repeatCount="indefinite" path={edgePath} />
-        </circle>
+        <>
+          {/* Moving dash segment — simulates signal travelling */}
+          <path
+            d={edgePath}
+            fill="none"
+            stroke={color}
+            strokeWidth={2.2}
+            strokeLinecap="round"
+            strokeDasharray="10 28"
+            opacity={0.9}
+            style={{
+              pointerEvents: "none",
+              filter: `drop-shadow(0 0 4px ${color}cc)`,
+              animation: "krea-edge-flow 0.9s linear infinite",
+            }}
+          />
+          {/* Travelling dot (brighter leading point) */}
+          <circle r="3.2" fill={color} opacity={0.96} style={{ filter: `drop-shadow(0 0 5px ${color})` }}>
+            <animateMotion
+              dur="0.9s"
+              repeatCount="indefinite"
+              path={edgePath}
+              rotate="auto"
+            />
+          </circle>
+        </>
       )}
+
+      {/* ⑤ Invisible fat hit area for pointer events */}
       <path
         d={edgePath}
         fill="none"
         stroke="transparent"
-        strokeWidth={20}
+        strokeWidth={24}
         style={{ cursor: "pointer" }}
       />
-    </>
+    </g>
   )
 }
 
-const edgeTypes: EdgeTypes = {
-  kreaEdge: KreaEdge,
-}
+const edgeTypes: EdgeTypes = { kreaEdge: KreaEdge }
 
-// Inner component that has access to useReactFlow
+// ─── Inner canvas (has access to useReactFlow) ───────────────────────────────
 function CanvasInner() {
   const {
-    nodes,
-    edges,
-    onNodesChange,
-    onEdgesChange,
-    onConnect,
-    setSelectedNodeIds,
-    setSelectedEdgeIds,
-    removeEdge,
-    removeSelectedElements,
+    nodes, edges,
+    onNodesChange, onEdgesChange, onConnect,
+    setSelectedNodeIds, setSelectedEdgeIds,
+    removeEdge, removeSelectedElements,
     executionStatus,
   } = useWorkflowStore()
 
   const { screenToFlowPosition } = useReactFlow()
 
-  // Context menu state
   const [contextMenu, setContextMenu] = useState<{
-    screenX: number
-    screenY: number
-    canvasX: number
-    canvasY: number
+    screenX: number; screenY: number; canvasX: number; canvasY: number
   } | null>(null)
 
-  const isValidConnection: IsValidConnection = useCallback(
-    (connection) => {
-      const { source, sourceHandle, target, targetHandle } = connection
-      if (source === target) return false
-      const sourceNode = nodes.find((n) => n.id === source)
-      const targetNode = nodes.find((n) => n.id === target)
-      if (!sourceNode || !targetNode) return false
-      const sourceType = HANDLE_TYPES[`${sourceNode.type}:${sourceHandle}`]
-      const targetType = HANDLE_TYPES[`${targetNode.type}:${targetHandle}`]
-      if (!sourceType || !targetType) return true
-      return sourceType === targetType
-    },
-    [nodes]
-  )
+  const isValidConnection: IsValidConnection = useCallback((connection) => {
+    const { source, sourceHandle, target, targetHandle } = connection
+    if (source === target) return false
+    const sourceNode = nodes.find(n => n.id === source)
+    const targetNode = nodes.find(n => n.id === target)
+    if (!sourceNode || !targetNode) return false
+    const sourceType = HANDLE_TYPES[`${sourceNode.type}:${sourceHandle}`]
+    const targetType = HANDLE_TYPES[`${targetNode.type}:${targetHandle}`]
+    if (!sourceType || !targetType) return true
+    return sourceType === targetType
+  }, [nodes])
 
-  const onSelectionChange = useCallback(
-    ({
-      nodes: selectedNodes,
-      edges: selectedEdges,
-    }: {
-      nodes: { id: string }[]
-      edges: { id: string }[]
-    }) => {
-      setSelectedNodeIds(selectedNodes.map((n) => n.id))
-      setSelectedEdgeIds(selectedEdges.map((e) => e.id))
-    },
-    [setSelectedEdgeIds, setSelectedNodeIds]
-  )
+  const onSelectionChange = useCallback(({
+    nodes: sn, edges: se,
+  }: { nodes: { id: string }[]; edges: { id: string }[] }) => {
+    setSelectedNodeIds(sn.map(n => n.id))
+    setSelectedEdgeIds(se.map(e => e.id))
+  }, [setSelectedEdgeIds, setSelectedNodeIds])
 
   useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null
-      const isTypingTarget =
-        target instanceof HTMLInputElement ||
-        target instanceof HTMLTextAreaElement ||
-        target?.isContentEditable
-
-      if (isTypingTarget) return
-
-      if (event.key === "Delete" || event.key === "Backspace") {
-        event.preventDefault()
-        removeSelectedElements()
-      }
+    const onKeyDown = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null
+      if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t?.isContentEditable) return
+      if (e.key === "Delete" || e.key === "Backspace") { e.preventDefault(); removeSelectedElements() }
     }
-
     window.addEventListener("keydown", onKeyDown)
     return () => window.removeEventListener("keydown", onKeyDown)
   }, [removeSelectedElements])
 
-  const handleContextMenu = useCallback(
-    (event: React.MouseEvent) => {
-      event.preventDefault()
-      const canvasPos = screenToFlowPosition({ x: event.clientX, y: event.clientY })
-      setContextMenu({
-        screenX: event.clientX,
-        screenY: event.clientY,
-        canvasX: canvasPos.x,
-        canvasY: canvasPos.y,
-      })
-    },
-    [screenToFlowPosition]
-  )
+  const handleContextMenu = useCallback((e: React.MouseEvent) => {
+    e.preventDefault()
+    const canvasPos = screenToFlowPosition({ x: e.clientX, y: e.clientY })
+    setContextMenu({ screenX: e.clientX, screenY: e.clientY, canvasX: canvasPos.x, canvasY: canvasPos.y })
+  }, [screenToFlowPosition])
 
-  const styledEdges: Edge[] = edges.map((edge) => {
-    const sourceNode = nodes.find((n) => n.id === edge.source)
-    const handleKey = `${sourceNode?.type}:${edge.sourceHandle}`
-    const dataType = HANDLE_TYPES[handleKey] ?? "text"
-    const color = DATA_TYPE_COLORS[dataType] ?? "#FCC800"
-    const sourceStatus = executionStatus[edge.source ?? ""]
-    const targetStatus = executionStatus[edge.target ?? ""]
-    const isActive = sourceStatus === "running" || targetStatus === "running"
-    const isDone = sourceStatus === "success"
-
-    return {
-      ...edge,
-      type: "kreaEdge",
-      animated: false,
-      style: undefined,
-      data: { ...(edge.data ?? {}), color, isActive, isDone },
-    }
+  // Attach color + active/done status to each edge
+  const styledEdges: Edge[] = edges.map(edge => {
+    const sourceNode = nodes.find(n => n.id === edge.source)
+    const handleKey  = `${sourceNode?.type}:${edge.sourceHandle}`
+    const dataType   = HANDLE_TYPES[handleKey] ?? "text"
+    const color      = DATA_TYPE_COLORS[dataType] ?? "#FCC800"
+    const srcStatus  = executionStatus[edge.source ?? ""]
+    const tgtStatus  = executionStatus[edge.target ?? ""]
+    const isActive   = srcStatus === "running" || tgtStatus === "running"
+    const isDone     = srcStatus === "success"
+    return { ...edge, type: "kreaEdge", animated: false, style: undefined, data: { ...(edge.data ?? {}), color, isActive, isDone } }
   })
 
-  const draggableNodes: typeof nodes = nodes.map((node) => ({
-    ...node,
-    dragHandle: ".node-drag-handle",
-  }))
+  const draggableNodes = nodes.map(n => ({ ...n, dragHandle: ".node-drag-handle" }))
 
   return (
     <>
       <style>{`
+        /* Edge flow animation */
+        @keyframes krea-edge-flow {
+          from { stroke-dashoffset: 38; }
+          to   { stroke-dashoffset:  0; }
+        }
+        /* Kill any RF default edge styling */
         .react-flow__edge path { stroke-dasharray: none !important; animation: none !important; }
         .react-flow__edge.animated path { stroke-dasharray: none !important; animation: none !important; }
+        /* Handle scale on hover */
+        .react-flow__handle { transition: transform 0.13s cubic-bezier(0.34,1.56,0.64,1) !important; }
+        .react-flow__handle:hover { transform: scale(1.5) !important; }
+        /* Dot grid colour */
+        .react-flow__background pattern circle { fill: var(--border) !important; }
+        /* Remove RF pane cursor override */
+        .react-flow__pane { cursor: default !important; }
+        /* Connection line */
         .react-flow__connection-path {
-          stroke: color-mix(in srgb, var(--text-primary) 35%, transparent) !important;
+          stroke: var(--border-strong) !important;
           stroke-width: 1.5px !important;
           stroke-dasharray: none !important;
           animation: none !important;
         }
-        .react-flow__handle { transition: width 0.15s ease, height 0.15s ease, opacity 0.15s ease !important; }
-        .react-flow__handle:hover { width: 14px !important; height: 14px !important; }
-        .react-flow__background pattern circle { fill: color-mix(in srgb, var(--text-primary) 10%, transparent) !important; }
-        .react-flow__pane { cursor: default !important; }
       `}</style>
 
       <div className="flex-1 w-full" style={{ height: "100vh" }} onContextMenu={handleContextMenu}>
@@ -279,16 +279,15 @@ function CanvasInner() {
           fitViewOptions={{ padding: 0.18 }}
           deleteKeyCode={null}
           multiSelectionKeyCode="Shift"
-          style={{ background: "var(--bg-primary)" }}
-          minZoom={0.2}
-          maxZoom={2}
+          style={{ background: "var(--bg-base)" }}
+          minZoom={0.15}
+          maxZoom={2.5}
           defaultEdgeOptions={{ type: "kreaEdge", animated: false }}
-          nodesDraggable={true}
-          nodesConnectable={true}
-          elementsSelectable={true}
-          panOnDrag={true}
-          zoomOnScroll={true}
-          // Dismiss context menu on canvas click
+          nodesDraggable
+          nodesConnectable
+          elementsSelectable
+          panOnDrag
+          zoomOnScroll
           onPaneClick={() => setContextMenu(null)}
           onNodeClick={() => setContextMenu(null)}
           onEdgeClick={(_, edge) => {
@@ -304,43 +303,29 @@ function CanvasInner() {
         >
           <Background
             variant={BackgroundVariant.Dots}
-            gap={18}
-            size={0.9}
-            color="color-mix(in srgb, var(--text-primary) 10%, transparent)"
+            gap={20}
+            size={1}
+            color="var(--border)"
           />
-
           <MiniMap
             position="bottom-right"
-            style={{
-              background: "#161616",
-              border: "0.5px solid rgba(255,255,255,0.08)",
-              borderRadius: 10,
-              overflow: "hidden",
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 12 }}
+            nodeColor={node => {
+              const s = executionStatus[node.id]
+              if (s === "running") return "var(--krea-purple)"
+              if (s === "success") return "var(--krea-green)"
+              if (s === "error")   return "var(--krea-red)"
+              return "var(--bg-elevated)"
             }}
-            nodeColor={(node) => {
-              const status = executionStatus[node.id]
-              if (status === "running") return "#a855f7"
-              if (status === "success") return "#4CAF50"
-              if (status === "error") return "#ef4444"
-              return "#2e2e2e"
-            }}
-            maskColor="rgba(0,0,0,0.65)"
+            maskColor="rgba(0,0,0,0.60)"
           />
-
           <Controls
             position="bottom-left"
-            style={{
-              background: "#1a1a1a",
-              border: "0.5px solid rgba(255,255,255,0.08)",
-              borderRadius: 10,
-              overflow: "hidden",
-              boxShadow: "0 4px 16px rgba(0,0,0,0.4)",
-            }}
+            style={{ background: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 12 }}
           />
         </ReactFlow>
       </div>
 
-      {/* Right-click context menu */}
       {contextMenu && (
         <CanvasContextMenu
           x={contextMenu.screenX}
@@ -354,7 +339,6 @@ function CanvasInner() {
   )
 }
 
-// Outer component wraps with ReactFlowProvider so useReactFlow works
 import { ReactFlowProvider } from "@xyflow/react"
 
 export function WorkflowCanvas() {

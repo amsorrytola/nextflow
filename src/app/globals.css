@@ -1,77 +1,116 @@
 @import "tailwindcss";
 
-/* ─── Krea Design Tokens ─── */
+/* ═══════════════════════════════════════════
+   KREA DESIGN TOKENS — DARK (default)
+   ═══════════════════════════════════════════ */
 :root {
-  --bg-base:     #080808;
-  --bg-surface:  #0e0e0e;
-  --bg-node:     #141414;
-  --bg-node-header: #191919;
-  --bg-elevated: rgba(255,255,255,0.055);
-  --bg-elevated-hover: rgba(255,255,255,0.08);
-  --bg-input:    rgba(255,255,255,0.04);
-  --bg-input-hover: rgba(255,255,255,0.065);
+  /* Backgrounds */
+  --bg-base:            #0d0d0d;
+  --bg-surface:         #111111;
+  --bg-sidebar:         #090909;
+  --bg-node:            #181818;
+  --bg-node-header:     #141414;
+  --bg-elevated:        rgba(255,255,255,0.042);
+  --bg-elevated-hover:  rgba(255,255,255,0.070);
+  --bg-input:           rgba(255,255,255,0.036);
+  --bg-input-hover:     rgba(255,255,255,0.058);
+  --bg-pill:            rgba(18,18,18,0.95);
+  --bg-menu:            rgba(14,14,14,0.98);
 
-  --border:       rgba(255,255,255,0.06);
-  --border-node:  rgba(255,255,255,0.08);
-  --border-strong: rgba(255,255,255,0.12);
-  --border-input: rgba(255,255,255,0.07);
+  /* Borders */
+  --border:             rgba(255,255,255,0.052);
+  --border-node:        rgba(255,255,255,0.068);
+  --border-strong:      rgba(255,255,255,0.098);
+  --border-input:       rgba(255,255,255,0.058);
+  --border-sidebar:     rgba(255,255,255,0.036);
 
-  --text-primary:   rgba(255,255,255,0.92);
-  --text-secondary: rgba(255,255,255,0.55);
-  --text-muted:     rgba(255,255,255,0.30);
-  --text-ghost:     rgba(255,255,255,0.18);
-  --text-soft:      rgba(255,255,255,0.72);
-  --text-faint:     rgba(255,255,255,0.38);
+  /* Text */
+  --text-primary:       rgba(255,255,255,0.90);
+  --text-secondary:     rgba(255,255,255,0.52);
+  --text-muted:         rgba(255,255,255,0.30);
+  --text-ghost:         rgba(255,255,255,0.18);
+  --text-soft:          rgba(255,255,255,0.72);
+  --text-faint:         rgba(255,255,255,0.35);
+  --text-placeholder:   rgba(255,255,255,0.20);
 
-  --panel-backdrop: rgba(10,10,10,0.97);
-  --selection-bg:   rgba(99,102,241,0.08);
-  --selection-border: rgba(99,102,241,0.35);
+  /* Handle / edge colors — exact Krea palette */
+  --krea-yellow:        #FCC800;
+  --krea-blue:          #0080FF;
+  --krea-green:         #29D246;
+  --krea-purple:        #9B6FFF;
+  --krea-red:           #FF4545;
+  --krea-orange:        #FF7D3B;
 
-  /* Krea exact handle colors */
-  --handle-yellow: #FCC800;
-  --handle-blue:   #0080FF;
-  --handle-green:  #29D246;
-  --handle-purple: #9B6FFF;
-  --accent:        #9B6FFF;
+  /* Accent */
+  --accent:             #9B6FFF;
+  --accent-dim:         rgba(155,111,255,0.14);
+
+  /* Shadows */
+  --shadow-node:        0 12px 40px rgba(0,0,0,0.60), 0 2px 8px rgba(0,0,0,0.32);
+  --shadow-node-hover:  0 20px 60px rgba(0,0,0,0.68), 0 4px 16px rgba(0,0,0,0.38);
+  --shadow-menu:        0 24px 64px rgba(0,0,0,0.75), 0 4px 16px rgba(0,0,0,0.42);
+  --shadow-pill:        0 8px 28px rgba(0,0,0,0.52), 0 2px 6px rgba(0,0,0,0.28);
+
+  /* Layout */
+  --topbar-h:           52px;
+  --radius-node:        13px;
+  --radius-menu:        16px;
+  --radius-pill:        11px;
+  --panel-backdrop:     rgba(9,9,9,0.98);
+  --selection-bg:       rgba(155,111,255,0.07);
+  --selection-border:   rgba(155,111,255,0.30);
 }
 
+/* ═══════════════════════════════════════════
+   LIGHT THEME
+   ═══════════════════════════════════════════ */
 [data-theme="light"] {
-  --bg-base:     #f0efe9;
-  --bg-surface:  #f7f6f1;
-  --bg-node:     #ffffff;
-  --bg-node-header: #fafaf8;
-  --bg-elevated: rgba(0,0,0,0.04);
-  --bg-elevated-hover: rgba(0,0,0,0.065);
-  --bg-input:    rgba(0,0,0,0.035);
-  --bg-input-hover: rgba(0,0,0,0.055);
+  --bg-base:            #efede7;
+  --bg-surface:         #f5f4ef;
+  --bg-sidebar:         #e8e6e0;
+  --bg-node:            #ffffff;
+  --bg-node-header:     #fafaf7;
+  --bg-elevated:        rgba(0,0,0,0.036);
+  --bg-elevated-hover:  rgba(0,0,0,0.058);
+  --bg-input:           rgba(0,0,0,0.030);
+  --bg-input-hover:     rgba(0,0,0,0.050);
+  --bg-pill:            rgba(255,255,255,0.94);
+  --bg-menu:            rgba(252,251,248,0.98);
 
-  --border:       rgba(0,0,0,0.08);
-  --border-node:  rgba(0,0,0,0.1);
-  --border-strong: rgba(0,0,0,0.15);
-  --border-input: rgba(0,0,0,0.09);
+  --border:             rgba(0,0,0,0.068);
+  --border-node:        rgba(0,0,0,0.088);
+  --border-strong:      rgba(0,0,0,0.12);
+  --border-input:       rgba(0,0,0,0.078);
+  --border-sidebar:     rgba(0,0,0,0.055);
 
-  --text-primary:   rgba(0,0,0,0.90);
-  --text-secondary: rgba(0,0,0,0.55);
-  --text-muted:     rgba(0,0,0,0.35);
-  --text-ghost:     rgba(0,0,0,0.22);
-  --text-soft:      rgba(0,0,0,0.72);
-  --text-faint:     rgba(0,0,0,0.40);
+  --text-primary:       rgba(0,0,0,0.88);
+  --text-secondary:     rgba(0,0,0,0.52);
+  --text-muted:         rgba(0,0,0,0.34);
+  --text-ghost:         rgba(0,0,0,0.24);
+  --text-soft:          rgba(0,0,0,0.70);
+  --text-faint:         rgba(0,0,0,0.40);
+  --text-placeholder:   rgba(0,0,0,0.26);
 
-  --panel-backdrop: rgba(247,246,241,0.97);
-  --selection-bg:   rgba(99,102,241,0.07);
-  --selection-border: rgba(99,102,241,0.30);
+  --shadow-node:        0 4px 20px rgba(0,0,0,0.09), 0 1px 4px rgba(0,0,0,0.06);
+  --shadow-node-hover:  0 8px 32px rgba(0,0,0,0.14), 0 2px 8px rgba(0,0,0,0.08);
+  --shadow-menu:        0 16px 48px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.09);
+  --shadow-pill:        0 4px 18px rgba(0,0,0,0.11), 0 1px 4px rgba(0,0,0,0.07);
+
+  --panel-backdrop:     rgba(245,244,239,0.98);
+  --selection-bg:       rgba(155,111,255,0.055);
+  --selection-border:   rgba(155,111,255,0.26);
 }
 
-/* ─── Reset ─── */
+/* ═══════════════════════════════════════════
+   RESET
+   ═══════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-html { height: 100%; }
+html, body { height: 100%; }
 
 body {
-  height: 100%;
   background: var(--bg-base);
   color: var(--text-primary);
-  font-family: -apple-system, BlinkMacSystemFont, "Inter", "SF Pro Text", system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", system-ui, sans-serif;
   font-size: 13px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
@@ -80,29 +119,27 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* ─── React Flow canvas ─── */
-.react-flow {
-  background: var(--bg-base) !important;
-}
+/* ═══════════════════════════════════════════
+   REACT FLOW CANVAS
+   ═══════════════════════════════════════════ */
+.react-flow,
 .react-flow__background {
   background: var(--bg-base) !important;
 }
-.react-flow__background pattern circle,
-.react-flow__background pattern rect {
-  fill: rgba(255,255,255,0.07) !important;
-}
-[data-theme="light"] .react-flow__background pattern circle,
-[data-theme="light"] .react-flow__background pattern rect {
-  fill: rgba(0,0,0,0.09) !important;
+
+/* Dot grid — theme-aware */
+.react-flow__background pattern circle {
+  fill: var(--border) !important;
 }
 
-/* ─── Node container: no border, no bg, no shadow from RF ─── */
+/* Completely strip ReactFlow's default node chrome */
 .react-flow__node {
   border: none !important;
   box-shadow: none !important;
   background: transparent !important;
   border-radius: 0 !important;
   cursor: default !important;
+  overflow: visible !important;  /* needed for floating title labels */
 }
 .react-flow__node:focus,
 .react-flow__node:focus-visible,
@@ -110,22 +147,16 @@ body {
   outline: none !important;
   box-shadow: none !important;
 }
-.react-flow__node:hover > div {
-  filter: brightness(1.035);
-  transition: filter 0.15s ease;
-}
 
-/* ─── Handles ─── */
+/* Handles */
 .react-flow__handle {
   border-radius: 50% !important;
-  transition: transform 0.12s ease, box-shadow 0.12s ease !important;
   cursor: crosshair !important;
+  transition: transform 0.13s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
-.react-flow__handle:hover {
-  transform: scale(1.35) !important;
-}
+.react-flow__handle:hover { transform: scale(1.5) !important; }
 
-/* ─── Edges: kill all dashing globally ─── */
+/* Kill ALL default edge dash/animation — KreaEdge renders everything */
 .react-flow__edge path,
 .react-flow__edge-path,
 .react-flow__edge.animated path,
@@ -135,81 +166,65 @@ body {
   animation: none !important;
 }
 
-/* ─── Connection line (while dragging) ─── */
+/* Live connection line while dragging */
 .react-flow__connection-path {
-  stroke: rgba(255,255,255,0.25) !important;
+  stroke: var(--border-strong) !important;
   stroke-width: 1.5px !important;
   stroke-dasharray: none !important;
   animation: none !important;
+  opacity: 0.65;
 }
 
-/* ─── Controls ─── */
-.react-flow__controls {
-  background: #111 !important;
-  border: 0.5px solid rgba(255,255,255,0.07) !important;
-  border-radius: 12px !important;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
-}
-.react-flow__controls-button {
-  background: transparent !important;
-  border-bottom: 0.5px solid rgba(255,255,255,0.05) !important;
-  color: rgba(255,255,255,0.35) !important;
-  fill: rgba(255,255,255,0.35) !important;
-  transition: background 0.12s ease, fill 0.12s ease !important;
-  width: 28px !important;
-  height: 28px !important;
-}
-.react-flow__controls-button:hover {
-  background: rgba(255,255,255,0.05) !important;
-  fill: rgba(255,255,255,0.7) !important;
-}
-[data-theme="light"] .react-flow__controls {
-  background: #fff !important;
-  border-color: rgba(0,0,0,0.08) !important;
-}
-[data-theme="light"] .react-flow__controls-button {
-  color: rgba(0,0,0,0.4) !important;
-  fill: rgba(0,0,0,0.4) !important;
-  border-bottom-color: rgba(0,0,0,0.05) !important;
-}
-[data-theme="light"] .react-flow__controls-button:hover {
-  background: rgba(0,0,0,0.04) !important;
-  fill: rgba(0,0,0,0.75) !important;
-}
-
-/* ─── MiniMap ─── */
-.react-flow__minimap {
-  background: #0e0e0e !important;
-  border: 0.5px solid rgba(255,255,255,0.07) !important;
-  border-radius: 12px !important;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.6) !important;
-}
-.react-flow__minimap-svg { background: transparent !important; }
-[data-theme="light"] .react-flow__minimap {
-  background: #f7f6f1 !important;
-  border-color: rgba(0,0,0,0.08) !important;
-}
-
-/* ─── Selection box ─── */
+/* Selection box */
 .react-flow__selection {
   background: var(--selection-bg) !important;
   border: 1px solid var(--selection-border) !important;
-  border-radius: 4px !important;
+  border-radius: 6px !important;
 }
 
-/* ─── Edge selected ─── */
-.react-flow__edge.selected path { opacity: 1 !important; }
+/* Controls */
+.react-flow__controls {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-pill) !important;
+}
+.react-flow__controls-button {
+  background: transparent !important;
+  border-bottom: 1px solid var(--border) !important;
+  color: var(--text-muted) !important;
+  fill: var(--text-muted) !important;
+  width: 28px !important;
+  height: 28px !important;
+  transition: background 0.12s ease, fill 0.12s ease !important;
+}
+.react-flow__controls-button:hover {
+  background: var(--bg-elevated-hover) !important;
+  fill: var(--text-soft) !important;
+}
+.react-flow__controls-button:last-child { border-bottom: none !important; }
 
-/* ─── Node drag handle cursor ─── */
+/* MiniMap */
+.react-flow__minimap {
+  background: var(--bg-surface) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-pill) !important;
+}
+.react-flow__minimap-svg { background: transparent !important; }
+
+/* Drag handle */
 .node-drag-handle { cursor: grab !important; }
 .node-drag-handle:active { cursor: grabbing !important; }
 
-/* ─── Keyframes ─── */
+/* ═══════════════════════════════════════════
+   KEYFRAMES
+   ═══════════════════════════════════════════ */
 @keyframes krea-pulse-ring {
-  0%   { opacity: 0.7; transform: scale(1); }
-  100% { opacity: 0;   transform: scale(1.05); }
+  0%   { opacity: 0.72; transform: scale(1); }
+  100% { opacity: 0;    transform: scale(1.07); }
 }
 @keyframes spin {
   from { transform: rotate(0deg); }
@@ -219,35 +234,28 @@ body {
   from { opacity: 0; transform: translateY(4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+@keyframes contextMenuIn {
+  from { opacity: 0; transform: scale(0.96) translateY(-5px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+@keyframes krea-flow-dash {
+  from { stroke-dashoffset: 28; }
+  to   { stroke-dashoffset: 0; }
+}
 
-/* ─── Scrollbars ─── */
+/* ═══════════════════════════════════════════
+   SCROLLBARS
+   ═══════════════════════════════════════════ */
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.12);
-  border-radius: 99px;
-}
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
-[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.14); }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-ghost); }
 
-/* ─── Input resets ─── */
-input, textarea, select {
-  font-family: inherit;
-  font-size: inherit;
-}
-select option {
-  background: #1a1a1a;
-  color: rgba(255,255,255,0.85);
-}
-[data-theme="light"] select option {
-  background: #fff;
-  color: #111;
-}
-
-/* ─── Focus rings: off by default, subtle on keyboard nav ─── */
+/* ═══════════════════════════════════════════
+   FORMS
+   ═══════════════════════════════════════════ */
+input, textarea, select { font-family: inherit; font-size: inherit; }
+select option { background: #1a1a1a; color: rgba(255,255,255,0.85); }
+[data-theme="light"] select option { background: #fff; color: #111; }
 :focus { outline: none; }
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-  border-radius: 4px;
-}
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }

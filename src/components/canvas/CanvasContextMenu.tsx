@@ -16,210 +16,254 @@ interface ContextMenuProps {
   onClose: () => void
 }
 
-// ── Node definitions matching krea_right-mouse-click.png ──
 const VIDEO_NODES = [
-  { type: "llmNode" as NodeType, label: "Generate Video", icon: Video, color: "#29D246", description: "AI video generation" },
-  { type: "llmNode" as NodeType, label: "Enhance Video", icon: Zap, color: "#29D246", description: "Upscale & improve" },
-  { type: "extractFrameNode" as NodeType, label: "Motion Transfer", icon: Film, color: "#29D246", description: "Transfer motion style" },
-  { type: "llmNode" as NodeType, label: "Lipsync", icon: Mic, color: "#29D246", description: "Sync lips to audio" },
-  { type: "extractFrameNode" as NodeType, label: "Video Utility", icon: Film, color: "#29D246", description: "Extract & process frames" },
+  { type: "llmNode"          as NodeType, label: "Generate Video",  icon: Video, color: "#29D246" },
+  { type: "llmNode"          as NodeType, label: "Enhance Video",   icon: Zap,   color: "#29D246" },
+  { type: "extractFrameNode" as NodeType, label: "Motion Transfer", icon: Film,  color: "#29D246" },
+  { type: "llmNode"          as NodeType, label: "Lipsync",         icon: Mic,   color: "#29D246" },
+  { type: "extractFrameNode" as NodeType, label: "Video Utility",   icon: Film,  color: "#29D246" },
 ]
 
 const OTHER_NODES = [
-  { type: "llmNode" as NodeType, label: "Generate 3D", icon: Box, color: "#a855f7", description: "3D asset generation" },
-  { type: "llmNode" as NodeType, label: "Audio", icon: Mic, color: "#f5a623", description: "Audio generation & FX" },
-  { type: "uploadImageNode" as NodeType, label: "Assets", icon: Layers, color: "#4d9de0", description: "Upload & manage files" },
-  { type: "textNode" as NodeType, label: "Utility", icon: Zap, color: "#888", description: "Text, math, logic nodes" },
+  { type: "llmNode"         as NodeType, label: "Generate 3D", icon: Box,    color: "#9B6FFF" },
+  { type: "llmNode"         as NodeType, label: "Audio",        icon: Mic,   color: "#FF9F43" },
+  { type: "uploadImageNode" as NodeType, label: "Assets",       icon: Layers,color: "#0080FF" },
+  { type: "textNode"        as NodeType, label: "Utility",      icon: Zap,   color: "#888" },
 ]
 
 const ASSET_NODES = [
-  { type: "textNode" as NodeType, label: "Text", icon: Type, color: "#FCC800" },
-  { type: "uploadImageNode" as NodeType, label: "Image", icon: ImageIcon, color: "#0080FF" },
-  { type: "uploadVideoNode" as NodeType, label: "Video", icon: Video, color: "#29D246" },
-  { type: "uploadVideoNode" as NodeType, label: "Audio", icon: Mic, color: "#f5a623" },
-  { type: "llmNode" as NodeType, label: "3D Object", icon: Box, color: "#a855f7" },
-  { type: "textNode" as NodeType, label: "Style", icon: Layers, color: "#888" },
-  { type: "llmNode" as NodeType, label: "Kling Element", icon: Zap, color: "#4d9de0" },
-  { type: "textNode" as NodeType, label: "Number", icon: Hash, color: "#888" },
+  { type: "textNode"         as NodeType, label: "Text",         icon: Type,      color: "#FCC800" },
+  { type: "uploadImageNode"  as NodeType, label: "Image",        icon: ImageIcon, color: "#0080FF" },
+  { type: "uploadVideoNode"  as NodeType, label: "Video",        icon: Video,     color: "#29D246" },
+  { type: "uploadVideoNode"  as NodeType, label: "Audio",        icon: Mic,       color: "#FF9F43" },
+  { type: "llmNode"          as NodeType, label: "3D Object",    icon: Box,       color: "#9B6FFF" },
+  { type: "textNode"         as NodeType, label: "Style",        icon: Layers,    color: "#888" },
+  { type: "llmNode"          as NodeType, label: "Kling Element",icon: Zap,       color: "#0080FF" },
+  { type: "textNode"         as NodeType, label: "Number",       icon: Hash,      color: "#888" },
 ]
 
-function createDefaultData(type: NodeType, label?: string): AnyNodeData {
+function mkDefault(type: NodeType, label?: string): AnyNodeData {
   switch (type) {
-    case "textNode": return { type, label: label ?? "Text", text: "" }
-    case "uploadImageNode": return { type, label: label ?? "Image", imageUrl: null, fileName: null }
-    case "uploadVideoNode": return { type, label: label ?? "Video", videoUrl: null, fileName: null }
-    case "llmNode": return { type, label: label ?? "Run LLM", model: "gemini-2.5-flash", systemPrompt: "", userMessage: "", result: null, error: null }
-    case "cropImageNode": return { type, label: label ?? "Crop Image", xPercent: 0, yPercent: 0, widthPercent: 100, heightPercent: 100, result: null, error: null }
+    case "textNode":         return { type, label: label ?? "Text",          text: "" }
+    case "uploadImageNode":  return { type, label: label ?? "Image",         imageUrl: null, fileName: null }
+    case "uploadVideoNode":  return { type, label: label ?? "Video",         videoUrl: null, fileName: null }
+    case "llmNode":          return { type, label: label ?? "Run LLM",       model: "gemini-2.5-flash", systemPrompt: "", userMessage: "", result: null, error: null }
+    case "cropImageNode":    return { type, label: label ?? "Crop Image",    xPercent: 0, yPercent: 0, widthPercent: 100, heightPercent: 100, result: null, error: null }
     case "extractFrameNode": return { type, label: label ?? "Extract Frame", timestamp: "0", result: null, error: null }
   }
 }
 
-let nodeCounter = 200
+let ctxCounter = 500
 
 export function CanvasContextMenu({ x, y, canvasX, canvasY, onClose }: ContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
   const { addNode } = useWorkflowStore()
 
-  // Close on outside click or Escape
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
-    const handleClick = (e: MouseEvent) => {
+    const onKey   = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
+    const onMouse = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) onClose()
     }
-    document.addEventListener("keydown", handleKey)
-    document.addEventListener("mousedown", handleClick)
+    document.addEventListener("keydown", onKey)
+    document.addEventListener("mousedown", onMouse)
     return () => {
-      document.removeEventListener("keydown", handleKey)
-      document.removeEventListener("mousedown", handleClick)
+      document.removeEventListener("keydown", onKey)
+      document.removeEventListener("mousedown", onMouse)
     }
   }, [onClose])
 
-  // Clamp menu to viewport
+  // Clamp to viewport edges
   useEffect(() => {
     if (!menuRef.current) return
     const rect = menuRef.current.getBoundingClientRect()
-    const vw = window.innerWidth
-    const vh = window.innerHeight
-    if (rect.right > vw) menuRef.current.style.left = `${x - rect.width}px`
-    if (rect.bottom > vh) menuRef.current.style.top = `${y - rect.height}px`
+    const vw = window.innerWidth, vh = window.innerHeight
+    if (rect.right  > vw) menuRef.current.style.left = `${x - rect.width}px`
+    if (rect.bottom > vh) menuRef.current.style.top  = `${y - rect.height}px`
   }, [x, y])
 
   const handleAdd = useCallback((type: NodeType, label?: string) => {
-    const id = `ctx-${type}-${nodeCounter++}`
-    addNode({
-      id,
-      type,
-      position: { x: canvasX, y: canvasY },
-      data: createDefaultData(type, label),
-    })
+    const id = `ctx-${type}-${ctxCounter++}`
+    addNode({ id, type, position: { x: canvasX, y: canvasY }, data: mkDefault(type, label) })
     onClose()
   }, [addNode, canvasX, canvasY, onClose])
+
+  // ── Shared row button ──
+  const RowBtn = ({ type, label, icon: Icon, color }: { type: NodeType; label: string; icon: React.ElementType; color: string }) => (
+    <button
+      onClick={() => handleAdd(type, label)}
+      style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        width: "100%", padding: "6px 10px",
+        borderRadius: 8, border: "none", background: "transparent",
+        cursor: "pointer", textAlign: "left",
+        transition: "background 0.1s ease",
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.055)" }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent" }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{
+          width: 18, height: 18, borderRadius: 5, flexShrink: 0,
+          background: color + "18",
+          border: `1px solid ${color}32`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <Icon size={10} style={{ color }} />
+        </div>
+        <span style={{ fontSize: 12.5, color: "rgba(255,255,255,0.68)", letterSpacing: "-0.01em" }}>
+          {label}
+        </span>
+      </div>
+      <ChevronRight size={10} style={{ color: "rgba(255,255,255,0.18)", flexShrink: 0 }} />
+    </button>
+  )
+
+  // ── Asset grid button (right panel) ──
+  const AssetBtn = ({ type, label, icon: Icon, color }: { type: NodeType; label: string; icon: React.ElementType; color: string }) => (
+    <button
+      onClick={() => handleAdd(type, label)}
+      style={{
+        display: "flex", alignItems: "center", gap: 9,
+        width: "100%", padding: "6px 10px",
+        borderRadius: 8, border: "none", background: "transparent",
+        cursor: "pointer", textAlign: "left",
+        transition: "background 0.1s ease",
+      }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.055)" }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent" }}
+    >
+      <div style={{
+        width: 22, height: 22, borderRadius: 7, flexShrink: 0,
+        background: color + "16",
+        border: `1px solid ${color}30`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+      }}>
+        <Icon size={11} style={{ color }} />
+      </div>
+      <span style={{ fontSize: 12.5, color: "rgba(255,255,255,0.62)", letterSpacing: "-0.01em" }}>
+        {label}
+      </span>
+    </button>
+  )
+
+  const Divider = () => (
+    <div style={{ height: 1, margin: "4px 10px", background: "rgba(255,255,255,0.055)" }} />
+  )
+
+  const SectionHead = ({ color, label }: { color: string; label: string }) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 10px 2px" }}>
+      <div style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0 }} />
+      <span style={{ fontSize: 10, color: "rgba(255,255,255,0.28)", letterSpacing: "0.07em", textTransform: "uppercase", fontWeight: 600 }}>
+        {label}
+      </span>
+    </div>
+  )
 
   return (
     <div
       ref={menuRef}
-      className="fixed z-[9999] select-none"
-      style={{ top: y, left: x }}
+      style={{
+        position: "fixed",
+        top: y,
+        left: x,
+        zIndex: 9999,
+        animation: "contextMenuIn 0.16s cubic-bezier(0.22,1,0.36,1) both",
+      }}
     >
-      {/* ── Floating panel — matches Krea's right-click menu ── */}
-      <div
-        className="flex rounded-2xl overflow-hidden shadow-2xl"
-        style={{
-          background: "rgba(18,18,18,0.97)",
-          border: "0.5px solid rgba(255,255,255,0.11)",
-          backdropFilter: "blur(20px)",
-          minWidth: 460,
-        }}
-      >
-        {/* Left: category list */}
-        <div className="flex flex-col py-2" style={{ width: 220, borderRight: "0.5px solid rgba(255,255,255,0.07)" }}>
+      <div style={{
+        display: "flex",
+        borderRadius: 18,
+        overflow: "hidden",
+        background: "rgba(13,13,13,0.97)",
+        border: "1px solid rgba(255,255,255,0.09)",
+        backdropFilter: "blur(24px)",
+        WebkitBackdropFilter: "blur(24px)",
+        boxShadow: "0 28px 80px rgba(0,0,0,0.80), 0 4px 16px rgba(0,0,0,0.45)",
+        minWidth: 470,
+      }}>
+
+        {/* ── Left panel: search + categories ── */}
+        <div style={{ width: 220, display: "flex", flexDirection: "column", borderRight: "1px solid rgba(255,255,255,0.06)" }}>
+
           {/* Search */}
-          <div className="px-3 pb-2">
-            <div
-              className="flex items-center gap-2 px-3 py-2 rounded-xl"
-              style={{ background: "rgba(255,255,255,0.05)", border: "0.5px solid rgba(255,255,255,0.08)" }}
-            >
-              <Search size={12} className="text-white/30 shrink-0" />
+          <div style={{ padding: "12px 10px 8px" }}>
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              padding: "7px 12px",
+              borderRadius: 10,
+              background: "rgba(255,255,255,0.05)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}>
+              <Search size={12} style={{ color: "rgba(255,255,255,0.28)", flexShrink: 0 }} />
               <input
                 autoFocus
-                placeholder="Search nodes or models..."
-                className="flex-1 bg-transparent text-[12px] text-white/70 placeholder:text-white/25 outline-none"
+                placeholder="Search nodes or models…"
                 onClick={e => e.stopPropagation()}
+                style={{
+                  flex: 1, background: "transparent", border: "none", outline: "none",
+                  fontSize: 12, color: "rgba(255,255,255,0.72)",
+                  fontFamily: "inherit",
+                }}
               />
             </div>
           </div>
 
           {/* Video section */}
-          <div className="px-3 pt-1 pb-1">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full" style={{ background: "#29D246" }} />
-              <span className="text-[10px] text-white/30 font-medium uppercase tracking-widest">Video</span>
-            </div>
-            {VIDEO_NODES.map(node => (
-              <button
-                key={node.label}
-                onClick={() => handleAdd(node.type, node.label)}
-                className="flex items-center justify-between w-full px-2 py-1.5 rounded-lg transition-colors hover:bg-white/[0.07] group"
-              >
-                <span className="text-[13px] text-white/65 group-hover:text-white/90 transition-colors">
-                  {node.label}
-                </span>
-                <ChevronRight size={11} className="text-white/20 group-hover:text-white/50" />
-              </button>
+          <div style={{ paddingBottom: 4 }}>
+            <SectionHead color="#29D246" label="Video" />
+            {VIDEO_NODES.map(n => (
+              <RowBtn key={n.label} type={n.type} label={n.label} icon={n.icon} color={n.color} />
             ))}
           </div>
 
-          <div className="mx-3 my-1.5" style={{ height: "0.5px", background: "rgba(255,255,255,0.07)" }} />
+          <Divider />
 
           {/* Other section */}
-          <div className="px-3">
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-2 h-2 rounded-full" style={{ background: "#888" }} />
-              <span className="text-[10px] text-white/30 font-medium uppercase tracking-widest">Other</span>
-            </div>
-            {OTHER_NODES.map(node => (
-              <button
-                key={node.label}
-                onClick={() => handleAdd(node.type, node.label)}
-                className="flex items-center justify-between w-full px-2 py-1.5 rounded-lg transition-colors hover:bg-white/[0.07] group"
-              >
-                <span className="text-[13px] text-white/65 group-hover:text-white/90 transition-colors">
-                  {node.label}
-                </span>
-                <ChevronRight size={11} className="text-white/20 group-hover:text-white/50" />
-              </button>
+          <div style={{ paddingBottom: 8 }}>
+            <SectionHead color="#888" label="Other" />
+            {OTHER_NODES.map(n => (
+              <RowBtn key={n.label} type={n.type} label={n.label} icon={n.icon} color={n.color} />
             ))}
           </div>
         </div>
 
-        {/* Right: asset grid panel — matches krea_right-mouse-click.png */}
-        <div className="flex flex-col py-2 px-2" style={{ width: 220 }}>
-          {/* Hoverable preview card at top — mirrors Krea's "Image" tooltip */}
-          <div
-            className="rounded-xl p-3 mb-3"
-            style={{
-              background: "rgba(255,255,255,0.03)",
-              border: "0.5px solid rgba(255,255,255,0.08)",
-            }}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <div className="flex items-center gap-1.5">
-                <ImageIcon size={13} className="text-[#0080FF]" />
-                <span className="text-[13px] text-white/80 font-medium">Image</span>
+        {/* ── Right panel: asset type grid ── */}
+        <div style={{ width: 220, display: "flex", flexDirection: "column" }}>
+
+          {/* Preview card */}
+          <div style={{ padding: "12px 12px 8px" }}>
+            <div style={{
+              borderRadius: 12,
+              padding: "10px 12px",
+              background: "rgba(255,255,255,0.034)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <ImageIcon size={13} style={{ color: "#0080FF" }} />
+                  <span style={{ fontSize: 13, color: "rgba(255,255,255,0.82)", fontWeight: 500 }}>Image</span>
+                </div>
+                <span style={{
+                  fontSize: 9.5, padding: "2px 8px", borderRadius: 99,
+                  background: "rgba(0,128,255,0.14)",
+                  color: "#0080FF", letterSpacing: "0.01em",
+                }}>
+                  image
+                </span>
               </div>
-              <span
-                className="text-[10px] px-1.5 py-0.5 rounded-full"
-                style={{ background: "rgba(0,128,255,0.15)", color: "#0080FF" }}
-              >
-                Output: image
-              </span>
+              <p style={{
+                fontSize: 11, color: "rgba(255,255,255,0.32)",
+                lineHeight: 1.55, letterSpacing: "0.005em",
+              }}>
+                Handle an image. Use as input or visualize output from image generation nodes.
+              </p>
             </div>
-            <p className="text-[11px] text-white/35 leading-relaxed">
-              Handle an Image. Use as an input for other nodes or visualize the output of an image generation node.
-            </p>
           </div>
 
-          {/* Asset type grid */}
-          <div className="flex flex-col gap-0.5">
-            {ASSET_NODES.map(node => (
-              <button
-                key={node.label}
-                onClick={() => handleAdd(node.type, node.label)}
-                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg transition-colors hover:bg-white/[0.07] group text-left"
-              >
-                <div
-                  className="w-5 h-5 rounded-md flex items-center justify-center shrink-0"
-                  style={{
-                    background: node.color + "18",
-                    border: `0.5px solid ${node.color}35`,
-                  }}
-                >
-                  <node.icon size={11} style={{ color: node.color }} />
-                </div>
-                <span className="text-[13px] text-white/60 group-hover:text-white/90 transition-colors">
-                  {node.label}
-                </span>
-              </button>
+          {/* Asset list */}
+          <div style={{ padding: "0 4px 10px", display: "flex", flexDirection: "column", gap: 1 }}>
+            {ASSET_NODES.map(n => (
+              <AssetBtn key={n.label} type={n.type} label={n.label} icon={n.icon} color={n.color} />
             ))}
           </div>
         </div>

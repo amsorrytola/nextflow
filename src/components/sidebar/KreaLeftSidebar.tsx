@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import { PanelLeft, Search, MoreHorizontal, Video, Type, Image as ImageIcon, Bot, Crop, Film } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { useWorkflowStore } from "@/store/workflowStore"
 import type { AnyNodeData, NodeType } from "@/types"
 import { UserButton } from "@clerk/nextjs"
@@ -14,6 +13,7 @@ const NAV = [
   { label: "Node Editor", href: "/nodes", icon: "https://s.krea.ai/icons/NodeEditor.png" },
   { label: "Assets",      href: "/assets",icon: "https://s.krea.ai/icons/Assets.png" },
 ]
+
 const TOOLS = [
   { label: "Image",       icon: "https://s.krea.ai/icons/imageV4.png" },
   { label: "Video",       icon: "https://s.krea.ai/icons/videoV2.png" },
@@ -22,28 +22,30 @@ const TOOLS = [
   { label: "Realtime",    icon: "https://s.krea.ai/icons/realtimeV2.png" },
   { label: "Edit",        icon: "https://s.krea.ai/icons/Edit.png" },
 ]
+
 const NODE_CATS = [
   { label: "Assets", items: [
-    { type: "textNode" as NodeType,        label: "Text",          Icon: Type,       color: "#FCC800", icon: "https://s.krea.ai/icons/Edit.png" },
-    { type: "uploadImageNode" as NodeType, label: "Image",         Icon: ImageIcon,  color: "#0080FF", icon: "https://s.krea.ai/icons/imageV4.png" },
-    { type: "uploadVideoNode" as NodeType, label: "Video",         Icon: Video,      color: "#29D246", icon: "https://s.krea.ai/icons/videoV2.png" },
+    { type: "textNode"         as NodeType, label: "Text",          Icon: Type,      color: "var(--krea-yellow)", icon: "https://s.krea.ai/icons/Edit.png" },
+    { type: "uploadImageNode"  as NodeType, label: "Image",         Icon: ImageIcon, color: "var(--krea-blue)",   icon: "https://s.krea.ai/icons/imageV4.png" },
+    { type: "uploadVideoNode"  as NodeType, label: "Video",         Icon: Video,     color: "var(--krea-green)",  icon: "https://s.krea.ai/icons/videoV2.png" },
   ]},
   { label: "Utility", items: [
-    { type: "llmNode" as NodeType,         label: "Run LLM",       Icon: Bot,        color: "#9B6FFF", icon: "https://s.krea.ai/icons/NanoBanana.png" },
-    { type: "cropImageNode" as NodeType,   label: "Crop Image",    Icon: Crop,       color: "#0080FF", icon: "https://s.krea.ai/icons/Enhance.png" },
-    { type: "extractFrameNode" as NodeType,label: "Extract Frame", Icon: Film,       color: "#29D246", icon: "https://s.krea.ai/icons/videoV2.png" },
+    { type: "llmNode"          as NodeType, label: "Run LLM",       Icon: Bot,       color: "var(--krea-purple)", icon: "https://s.krea.ai/icons/NanoBanana.png" },
+    { type: "cropImageNode"    as NodeType, label: "Crop Image",    Icon: Crop,      color: "var(--krea-blue)",   icon: "https://s.krea.ai/icons/Enhance.png" },
+    { type: "extractFrameNode" as NodeType, label: "Extract Frame", Icon: Film,      color: "var(--krea-green)",  icon: "https://s.krea.ai/icons/videoV2.png" },
   ]},
 ]
+
 const ALL_NODES = NODE_CATS.flatMap(c => c.items)
 
 function mkDefault(type: NodeType): AnyNodeData {
   switch (type) {
-    case "textNode":        return { type, label: "Text",          text: "" }
-    case "uploadImageNode": return { type, label: "Upload Image",  imageUrl: null, fileName: null }
-    case "uploadVideoNode": return { type, label: "Upload Video",  videoUrl: null, fileName: null }
-    case "llmNode":         return { type, label: "Run LLM",       model: "gemini-2.5-flash", systemPrompt: "", userMessage: "", result: null, error: null }
-    case "cropImageNode":   return { type, label: "Crop Image",    xPercent: 0, yPercent: 0, widthPercent: 100, heightPercent: 100, result: null, error: null }
-    case "extractFrameNode":return { type, label: "Extract Frame", timestamp: "0", result: null, error: null }
+    case "textNode":         return { type, label: "Text",          text: "" }
+    case "uploadImageNode":  return { type, label: "Upload Image",  imageUrl: null, fileName: null }
+    case "uploadVideoNode":  return { type, label: "Upload Video",  videoUrl: null, fileName: null }
+    case "llmNode":          return { type, label: "Run LLM",       model: "gemini-2.5-flash", systemPrompt: "", userMessage: "", result: null, error: null }
+    case "cropImageNode":    return { type, label: "Crop Image",    xPercent: 0, yPercent: 0, widthPercent: 100, heightPercent: 100, result: null, error: null }
+    case "extractFrameNode": return { type, label: "Extract Frame", timestamp: "0", result: null, error: null }
   }
 }
 
@@ -54,176 +56,245 @@ export function KreaLeftSidebar() {
   const [search, setSearch] = useState("")
   const { addNode, nodes } = useWorkflowStore()
   const pathname = usePathname()
-  const router = useRouter()
+  const router   = useRouter()
   const onWorkflow = pathname?.startsWith("/workflow")
 
   const add = (type: NodeType) => {
     const id = `${type}-${nc++}`
-    const offset = (nodes.length % 8) * 24
-    addNode({ id, type, position: { x: 320 + offset, y: 220 + offset }, data: mkDefault(type) })
+    const off = (nodes.length % 8) * 24
+    addNode({ id, type, position: { x: 300 + off, y: 200 + off }, data: mkDefault(type) })
   }
 
   const filtered = search ? ALL_NODES.filter(n => n.label.toLowerCase().includes(search.toLowerCase())) : null
 
-  const W = collapsed ? 44 : 148
+  const W = collapsed ? 44 : 152
 
-  const navBtn = (label: string, href: string, iconUrl: string) => {
+  // ── Section label ──────────────────────────────
+  const SectionLabel = ({ children }: { children: React.ReactNode }) => collapsed ? null : (
+    <div style={{
+      padding: "8px 12px 4px",
+      fontSize: 10,
+      color: "var(--text-ghost)",
+      letterSpacing: "0.065em",
+      textTransform: "uppercase",
+      fontWeight: 600,
+      userSelect: "none",
+    }}>
+      {children}
+    </div>
+  )
+
+  // ── Nav button ─────────────────────────────────
+  const NavBtn = ({ label, href, iconUrl }: { label: string; href: string; iconUrl: string }) => {
     const isActive = pathname === href || (href === "/nodes" && (pathname === "/nodes" || onWorkflow))
     return (
-      <button key={label} title={collapsed ? label : undefined}
+      <button
+        key={label}
+        title={collapsed ? label : undefined}
         onClick={() => router.push(href)}
         style={{
-          display: "flex", alignItems: "center", gap: 10,
-          padding: "5px 10px 5px 12px", borderRadius: 7,
-          background: isActive ? "rgba(255,255,255,0.07)" : "transparent",
-          border: "none", cursor: "pointer", width: "100%", textAlign: "left",
-          color: isActive ? "rgba(255,255,255,0.90)" : "rgba(255,255,255,0.50)",
-          fontSize: 12.5, fontWeight: isActive ? 500 : 400,
+          display: "flex",
+          alignItems: "center",
+          gap: 9,
+          padding: collapsed ? "7px 12px" : "6px 10px 6px 12px",
+          borderRadius: 8,
+          background: isActive ? "var(--bg-elevated-hover)" : "transparent",
+          border: "none",
+          cursor: "pointer",
+          width: "100%",
+          textAlign: "left",
+          color: isActive ? "var(--text-primary)" : "var(--text-secondary)",
+          fontSize: 12.5,
+          fontWeight: isActive ? 500 : 400,
+          letterSpacing: "-0.01em",
           transition: "background 0.12s ease, color 0.12s ease",
         }}
-        onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)" }}
+        onMouseEnter={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "var(--bg-elevated)" }}
         onMouseLeave={e => { if (!isActive) (e.currentTarget as HTMLElement).style.background = "transparent" }}
       >
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={iconUrl} alt={label} draggable={false} style={{ width: 16, height: 16, objectFit: "contain", opacity: isActive ? 0.95 : 0.55 }} />
-        {!collapsed && <span style={{ letterSpacing: "-0.01em" }}>{label}</span>}
+        <img
+          src={iconUrl} alt={label} draggable={false}
+          style={{ width: 16, height: 16, objectFit: "contain", opacity: isActive ? 0.9 : 0.5, flexShrink: 0 }}
+        />
+        {!collapsed && <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{label}</span>}
       </button>
     )
   }
 
+  // ── Tool button ────────────────────────────────
+  const ToolBtn = ({ label, iconUrl }: { label: string; iconUrl: string }) => (
+    <button
+      key={label}
+      title={collapsed ? label : undefined}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 9,
+        padding: collapsed ? "7px 12px" : "6px 10px 6px 12px",
+        borderRadius: 8,
+        border: "none",
+        background: "transparent",
+        cursor: "pointer",
+        color: "var(--text-secondary)",
+        fontSize: 12.5,
+        width: "100%",
+        textAlign: "left",
+        letterSpacing: "-0.01em",
+        transition: "background 0.12s ease, color 0.12s ease",
+      }}
+      onMouseEnter={e => {
+        (e.currentTarget as HTMLElement).style.background = "var(--bg-elevated)"
+        ;(e.currentTarget as HTMLElement).style.color = "var(--text-primary)"
+      }}
+      onMouseLeave={e => {
+        (e.currentTarget as HTMLElement).style.background = "transparent"
+        ;(e.currentTarget as HTMLElement).style.color = "var(--text-secondary)"
+      }}
+    >
+      <img src={iconUrl} alt={label} draggable={false} style={{ width: 16, height: 16, objectFit: "contain", opacity: 0.52, flexShrink: 0 }} />
+      {!collapsed && <span>{label}</span>}
+    </button>
+  )
+
   return (
     <div style={{
       width: W, minWidth: W, maxWidth: W,
-      background: "#050505",
-      borderRight: "1px solid rgba(255,255,255,0.04)",
-      display: "flex", flexDirection: "column", height: "100%",
-      transition: "width 0.18s cubic-bezier(0.4,0,0.2,1)",
-      overflow: "hidden", flexShrink: 0, position: "relative", zIndex: 20,
+      background: "var(--bg-sidebar)",
+      borderRight: "1px solid var(--border-sidebar)",
+      display: "flex",
+      flexDirection: "column",
+      height: "100%",
+      flexShrink: 0,
+      overflow: "hidden",
+      transition: "width 0.2s cubic-bezier(0.4,0,0.2,1)",
+      zIndex: 20,
     }}>
 
-      {/* Toggle */}
-      <div style={{ height: 40, display: "flex", alignItems: "center", padding: "0 12px", flexShrink: 0 }}>
-        <button onClick={() => setCollapsed(!collapsed)}
+      {/* Toggle button */}
+      <div style={{ height: 42, display: "flex", alignItems: "center", padding: "0 12px", flexShrink: 0 }}>
+        <button
+          onClick={() => setCollapsed(c => !c)}
+          title={collapsed ? "Expand" : "Collapse"}
           style={{
-            width: 24, height: 24, display: "flex", alignItems: "center", justifyContent: "center",
-            borderRadius: 6, border: "none", background: "transparent", cursor: "pointer",
-            color: "rgba(255,255,255,0.30)", transition: "background 0.12s, color 0.12s",
+            width: 26, height: 26,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            borderRadius: 7, border: "none",
+            background: "transparent",
+            cursor: "pointer",
+            color: "var(--text-ghost)",
+            transition: "background 0.12s ease, color 0.12s ease",
           }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.05)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.65)" }}
-          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.30)" }}
+          onMouseEnter={e => {
+            (e.currentTarget as HTMLElement).style.background = "var(--bg-elevated)"
+            ;(e.currentTarget as HTMLElement).style.color = "var(--text-secondary)"
+          }}
+          onMouseLeave={e => {
+            (e.currentTarget as HTMLElement).style.background = "transparent"
+            ;(e.currentTarget as HTMLElement).style.color = "var(--text-ghost)"
+          }}
         >
           <PanelLeft size={13} strokeWidth={2} />
         </button>
       </div>
 
-      {/* Nav items */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 1, padding: "0 6px", flexShrink: 0 }}>
-        {NAV.map(n => navBtn(n.label, n.href, n.icon))}
+      {/* Nav */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 1, padding: "0 5px", flexShrink: 0 }}>
+        {NAV.map(n => <NavBtn key={n.label} label={n.label} href={n.href} iconUrl={n.icon} />)}
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", marginTop: 8 }}>
-        {/* Tools header */}
-        {!collapsed && (
-          <div style={{ padding: "2px 18px 4px", fontSize: 10.5, color: "rgba(255,255,255,0.20)",
-            letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500, userSelect: "none" }}>
-            Tools
-          </div>
-        )}
+      {/* Scrollable content */}
+      <div style={{ flex: 1, overflowY: "auto", overflowX: "hidden", marginTop: 6, scrollbarWidth: "none" }}>
 
-        <div style={{ display: "flex", flexDirection: "column", gap: 1, padding: "0 6px" }}>
-          {TOOLS.map(t => (
-            <button key={t.label} title={collapsed ? t.label : undefined}
-              style={{
-                display: "flex", alignItems: "center", gap: 10, padding: "5px 10px 5px 12px",
-                borderRadius: 7, border: "none", background: "transparent", cursor: "pointer",
-                color: "rgba(255,255,255,0.48)", fontSize: 12.5, width: "100%", textAlign: "left",
-                transition: "background 0.12s, color 0.12s",
-              }}
-              onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.75)" }}
-              onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent"; (e.currentTarget as HTMLElement).style.color = "rgba(255,255,255,0.48)" }}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={t.icon} alt={t.label} draggable={false} style={{ width: 16, height: 16, objectFit: "contain", opacity: 0.55 }} />
-              {!collapsed && <span style={{ letterSpacing: "-0.01em" }}>{t.label}</span>}
-            </button>
-          ))}
+        <SectionLabel>Tools</SectionLabel>
+        <div style={{ display: "flex", flexDirection: "column", gap: 1, padding: "0 5px" }}>
+          {TOOLS.map(t => <ToolBtn key={t.label} label={t.label} iconUrl={t.icon} />)}
           {!collapsed && (
             <button style={{
-              display: "flex", alignItems: "center", gap: 10, padding: "5px 10px 5px 12px",
-              borderRadius: 7, border: "none", background: "transparent", cursor: "pointer",
-              color: "rgba(255,255,255,0.25)", fontSize: 12.5, width: "100%",
+              display: "flex", alignItems: "center", gap: 9,
+              padding: "6px 10px 6px 12px", borderRadius: 8,
+              border: "none", background: "transparent", cursor: "pointer",
+              color: "var(--text-ghost)", fontSize: 12.5, width: "100%",
             }}>
-              <MoreHorizontal size={14} style={{ opacity: 0.4 }} />
-              {!collapsed && <span>More</span>}
+              <MoreHorizontal size={14} style={{ opacity: 0.35, flexShrink: 0 }} />
+              <span>More</span>
             </button>
           )}
         </div>
 
-        {/* Sessions */}
-        {!collapsed && (
-          <div style={{ padding: "10px 18px 2px", fontSize: 10.5, color: "rgba(255,255,255,0.20)",
-            letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500, userSelect: "none" }}>
-            Sessions
-          </div>
-        )}
+        {!collapsed && <SectionLabel>Sessions</SectionLabel>}
 
-        {/* Quick Access — workflow only */}
+        {/* Quick Access — only when on workflow page */}
         {!collapsed && onWorkflow && (
-          <div style={{ padding: "8px 6px 0" }}>
-            <div style={{ padding: "0 12px 6px", fontSize: 10.5, color: "rgba(255,255,255,0.20)",
-              letterSpacing: "0.06em", textTransform: "uppercase", fontWeight: 500, userSelect: "none" }}>
-              Quick Access
-            </div>
+          <div style={{ padding: "6px 5px 0" }}>
+            <SectionLabel>Quick Access</SectionLabel>
 
             {/* Search */}
             <div style={{
-              display: "flex", alignItems: "center", gap: 7,
-              margin: "0 6px 6px", padding: "6px 10px", borderRadius: 8,
-              background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
+              display: "flex", alignItems: "center", gap: 6,
+              margin: "0 5px 6px",
+              padding: "5px 10px",
+              borderRadius: 8,
+              background: "var(--bg-input)",
+              border: "1px solid var(--border-input)",
             }}>
-              <Search size={10} style={{ color: "rgba(255,255,255,0.22)", flexShrink: 0 }} />
-              <input placeholder="Search nodes..." value={search}
+              <Search size={10} style={{ color: "var(--text-ghost)", flexShrink: 0 }} />
+              <input
+                placeholder="Search nodes…"
+                value={search}
                 onChange={e => setSearch(e.target.value)}
                 style={{
                   flex: 1, background: "transparent", border: "none", outline: "none",
-                  fontSize: 12, color: "rgba(255,255,255,0.65)", fontFamily: "inherit",
-                }} />
+                  fontSize: 11.5, color: "var(--text-soft)",
+                  fontFamily: "inherit",
+                }}
+              />
             </div>
 
             {/* Node list */}
             {(filtered ?? NODE_CATS.flatMap(c => [
               { type: null as NodeType | null, label: `__CAT__${c.label}`, Icon: null, color: "", icon: "" },
               ...c.items,
-            ])).map(node => {
+            ])).map((node, i) => {
               if (node.label.startsWith("__CAT__")) {
                 return (
-                  <div key={node.label} style={{ padding: "6px 18px 3px", fontSize: 10.5,
-                    color: "rgba(255,255,255,0.18)", letterSpacing: "0.06em",
-                    textTransform: "uppercase", fontWeight: 500, userSelect: "none" }}>
+                  <div key={`cat-${i}`} style={{
+                    padding: "7px 12px 3px",
+                    fontSize: 10,
+                    color: "var(--text-ghost)",
+                    letterSpacing: "0.065em",
+                    textTransform: "uppercase",
+                    fontWeight: 600,
+                    userSelect: "none",
+                  }}>
                     {node.label.replace("__CAT__", "")}
                   </div>
                 )
               }
               return (
-                <button key={node.type} onClick={() => add(node.type!)}
+                <button
+                  key={String(node.type)}
+                  onClick={() => add(node.type!)}
                   style={{
-                    display: "flex", alignItems: "center", gap: 9, padding: "5px 12px",
-                    borderRadius: 7, border: "none", background: "transparent", cursor: "pointer",
-                    width: "100%", textAlign: "left",
-                    transition: "background 0.12s",
+                    display: "flex", alignItems: "center", gap: 8,
+                    padding: "5px 10px 5px 12px",
+                    borderRadius: 8,
+                    border: "none", background: "transparent",
+                    cursor: "pointer", width: "100%", textAlign: "left",
+                    transition: "background 0.11s ease",
                   }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.045)" }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--bg-elevated)" }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent" }}
                 >
+                  {/* Icon badge */}
                   <div style={{
-                    width: 20, height: 20, borderRadius: 6, overflow: "hidden",
-                    background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.06)",
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                    background: "var(--bg-input)",
+                    border: "1px solid var(--border)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
                   }}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={node.icon} alt="" draggable={false} style={{ width: 13, height: 13, objectFit: "contain", opacity: 0.80 }} />
+                    <img src={node.icon} alt="" draggable={false} style={{ width: 12, height: 12, objectFit: "contain", opacity: 0.72 }} />
                   </div>
-                  <span style={{ fontSize: 12.5, color: "rgba(255,255,255,0.62)", letterSpacing: "-0.01em" }}>
+                  <span style={{ fontSize: 12, color: "var(--text-secondary)", letterSpacing: "-0.01em" }}>
                     {node.label}
                   </span>
                 </button>
@@ -235,23 +306,33 @@ export function KreaLeftSidebar() {
 
       {/* Footer */}
       <div style={{
-        flexShrink: 0, padding: "8px 10px",
-        borderTop: "1px solid rgba(255,255,255,0.04)",
+        flexShrink: 0,
+        padding: "7px 9px",
+        borderTop: "1px solid var(--border-sidebar)",
       }}>
-        <div style={{
-          display: "flex", alignItems: "center", gap: 8, padding: "4px 4px",
-          borderRadius: 8, cursor: "pointer",
-          transition: "background 0.12s",
-        }}
-          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.04)" }}
+        <div
+          style={{
+            display: "flex", alignItems: "center", gap: 8,
+            padding: "4px 5px",
+            borderRadius: 8,
+            cursor: "pointer",
+            transition: "background 0.12s ease",
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = "var(--bg-elevated)" }}
           onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = "transparent" }}
         >
-          <UserButton appearance={{ elements: { avatarBox: "w-7 h-7" } }} />
+          <UserButton appearance={{ elements: { avatarBox: "w-6 h-6" } }} />
           {!collapsed && (
             <div style={{ minWidth: 0 }}>
-              <div style={{ fontSize: 11.5, color: "rgba(255,255,255,0.55)", overflow: "hidden",
-                textOverflow: "ellipsis", whiteSpace: "nowrap", letterSpacing: "-0.01em" }}>
-                Free
+              <div style={{
+                fontSize: 11,
+                color: "var(--text-secondary)",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                letterSpacing: "-0.01em",
+              }}>
+                Free plan
               </div>
             </div>
           )}

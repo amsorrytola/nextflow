@@ -143,7 +143,7 @@ export function KreaTopBar({ workflowId, rightPanel, onRightPanelChange }: KreaT
   }
 
   return (
-    <div className="absolute top-0 left-0 right-0 h-[56px] flex items-start justify-between px-12 pt-4 z-30 pointer-events-none">
+    <div className="absolute top-5 left-5 right-5 h-[56px] flex items-start justify-between px-12 pt-4 z-30 pointer-events-none">
 
       {/* ── Left: workflow name + dropdown ── */}
       <div className="pointer-events-auto relative" ref={dropdownRef}>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { KreaLeftSidebar } from "@/components/sidebar/KreaLeftSidebar"
-import { Search, ChevronDown, SlidersHorizontal, ArrowRight } from "lucide-react"
+import { Search, ChevronDown, SlidersHorizontal, ArrowRight, Plus } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { formatDistanceToNow } from "date-fns"
 
@@ -11,83 +11,68 @@ interface WorkflowCard {
   name: string
   updatedAt: string
   isSample?: boolean
-  thumbnailNodes?: { color: string; x: number; y: number; label?: string }[]
+  thumbnailNodes?: { color: string; x: number; y: number }[]
 }
 
-// SVG thumbnail matching Krea's style
+// ── SVG mini-workflow thumbnail ───────────────────────────────────────────────
 function WorkflowThumbnail({ workflow }: { workflow: WorkflowCard }) {
+  const ns = workflow.thumbnailNodes ?? []
   return (
-    <div className="w-full h-full relative overflow-hidden" style={{ background: "#141414" }}>
-      <svg className="w-full h-full" viewBox="0 0 280 175" preserveAspectRatio="xMidYMid meet">
-        {workflow.thumbnailNodes?.map((node, i) => {
-          const next = workflow.thumbnailNodes?.[i + 1]
-          return (
-            <g key={i}>
-              {next && (
-                <path
-                  d={`M ${node.x + 52} ${node.y + 16} C ${node.x + 82} ${node.y + 16} ${next.x - 20} ${next.y + 16} ${next.x} ${next.y + 16}`}
-                  stroke={node.color}
-                  strokeWidth="1.5"
-                  fill="none"
-                  opacity="0.7"
-                />
-              )}
-              {/* Node card */}
-              <rect x={node.x} y={node.y} width={52} height={32} rx="7"
-                fill="#1e1e1e" stroke={node.color} strokeWidth="0.75" />
-              {/* Left handle */}
-              <circle cx={node.x} cy={node.y + 16} r="4" fill={node.color} opacity="0.9" />
-              {/* Right handle */}
-              <circle cx={node.x + 52} cy={node.y + 16} r="4" fill={node.color} opacity="0.9" />
-              {/* Content lines */}
-              <rect x={node.x + 9} y={node.y + 10} width={20} height={3} rx="1.5" fill={node.color} opacity="0.4" />
-              <rect x={node.x + 9} y={node.y + 18} width={30} height={2.5} rx="1.25" fill="rgba(255,255,255,0.1)" />
-            </g>
-          )
-        })}
-      </svg>
-    </div>
+    <svg viewBox="0 0 280 175" style={{ width: "100%", height: "100%" }} preserveAspectRatio="xMidYMid meet">
+      <rect width="280" height="175" fill="#111111" />
+      {/* dot grid */}
+      {Array.from({ length: 8 }, (_, row) =>
+        Array.from({ length: 14 }, (_, col) => (
+          <circle key={`${row}-${col}`} cx={10 + col * 20} cy={10 + row * 22} r={0.8} fill="rgba(255,255,255,0.07)" />
+        ))
+      )}
+      {ns.map((node, i) => {
+        const next = ns[i + 1]
+        return (
+          <g key={i}>
+            {next && (
+              <path
+                d={`M ${node.x + 54} ${node.y + 16} C ${node.x + 80} ${node.y + 16} ${next.x - 18} ${next.y + 16} ${next.x} ${next.y + 16}`}
+                stroke={node.color}
+                strokeWidth={1.4}
+                fill="none"
+                opacity={0.55}
+                strokeLinecap="round"
+              />
+            )}
+            {/* card */}
+            <rect x={node.x} y={node.y} width={54} height={32} rx={7}
+              fill="#1c1c1c" stroke={node.color} strokeWidth={0.7} opacity={0.95} />
+            {/* handles */}
+            <circle cx={node.x}       cy={node.y + 16} r={3.5} fill={node.color} opacity={0.85} />
+            <circle cx={node.x + 54}  cy={node.y + 16} r={3.5} fill={node.color} opacity={0.85} />
+            {/* inner lines */}
+            <rect x={node.x + 8} y={node.y + 10} width={18} height={2.5} rx={1.25} fill={node.color} opacity={0.35} />
+            <rect x={node.x + 8} y={node.y + 17} width={28} height={2}   rx={1}    fill="rgba(255,255,255,0.09)" />
+          </g>
+        )
+      })}
+    </svg>
   )
 }
 
 const SAMPLE_THUMBNAILS: WorkflowCard["thumbnailNodes"][] = [
-  [
-    { color: "#4d9de0", x: 14, y: 28 },
-    { color: "#4d9de0", x: 100, y: 60 },
-    { color: "#4CAF50", x: 178, y: 28 },
-    { color: "#a855f7", x: 210, y: 88 },
-  ],
-  [
-    { color: "#f5a623", x: 12, y: 50 },
-    { color: "#4d9de0", x: 94, y: 18 },
-    { color: "#4d9de0", x: 94, y: 86 },
-    { color: "#4CAF50", x: 192, y: 52 },
-  ],
-  [
-    { color: "#a855f7", x: 12, y: 68 },
-    { color: "#f5a623", x: 98, y: 20 },
-    { color: "#4d9de0", x: 98, y: 96 },
-    { color: "#4CAF50", x: 196, y: 58 },
-  ],
-  [
-    { color: "#4CAF50", x: 8, y: 38 },
-    { color: "#a855f7", x: 88, y: 18 },
-    { color: "#f5a623", x: 88, y: 78 },
-    { color: "#4d9de0", x: 188, y: 52 },
-  ],
+  [{ color: "#0080FF", x: 14, y: 28 }, { color: "#FCC800", x: 100, y: 56 }, { color: "#29D246", x: 178, y: 28 }, { color: "#9B6FFF", x: 212, y: 88 }],
+  [{ color: "#FCC800", x: 12, y: 50 }, { color: "#0080FF", x: 94, y: 18 }, { color: "#0080FF", x: 94, y: 88 }, { color: "#29D246", x: 192, y: 52 }],
+  [{ color: "#9B6FFF", x: 12, y: 68 }, { color: "#FCC800", x: 98, y: 20 }, { color: "#0080FF", x: 98, y: 96 }, { color: "#29D246", x: 196, y: 58 }],
+  [{ color: "#29D246", x: 8,  y: 38 }, { color: "#9B6FFF", x: 88, y: 18 }, { color: "#FCC800", x: 88, y: 78 }, { color: "#0080FF", x: 188, y: 52 }],
 ]
 
-// Sample workflow card (always shown)
-const SAMPLE_WORKFLOW_CARD: WorkflowCard = {
+const SAMPLE_CARD: WorkflowCard = {
   id: "sample",
   name: "SampleWorkflow",
   updatedAt: new Date().toISOString(),
   isSample: true,
   thumbnailNodes: [
-    { color: "#4d9de0", x: 14, y: 18 },
-    { color: "#f5a623", x: 14, y: 88 },
-    { color: "#a855f7", x: 110, y: 52 },
-    { color: "#4CAF50", x: 210, y: 52 },
+    { color: "#0080FF", x: 14, y: 18 },
+    { color: "#FCC800", x: 14, y: 88 },
+    { color: "#9B6FFF", x: 110, y: 52 },
+    { color: "#29D246", x: 210, y: 52 },
   ],
 }
 
@@ -127,97 +112,162 @@ export default function NodesPage() {
     if (data.id) router.push(`/workflow/${data.id}`)
   }
 
-  const handleOpenSample = () => {
-    // Navigate to a "sample" workflow route — WorkflowPage loads sample data
-    router.push("/workflow/sample")
-  }
+  const handleOpenSample = () => { router.push("/workflow/sample") }
 
   if (!mounted) return null
 
-  // Build displayed cards: sample always first, then real workflows
-  const displayedCards: WorkflowCard[] = [
-    SAMPLE_WORKFLOW_CARD,
-    ...workflows,
-  ]
+  const displayedCards: WorkflowCard[] = [SAMPLE_CARD, ...workflows]
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden" style={{ background: "#0a0a0a" }}>
+    <div style={{ display: "flex", height: "100vh", width: "100vw", overflow: "hidden", background: "var(--bg-base)" }}>
       <KreaLeftSidebar />
 
-      <main className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "none" }}>
+      <main style={{ flex: 1, overflowY: "auto", scrollbarWidth: "none" }}>
 
-        {/* ── Hero ── */}
-        <div className="relative overflow-hidden" style={{ minHeight: 280 }}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+        {/* ── Hero banner ── */}
+        <div style={{ position: "relative", overflow: "hidden", minHeight: 260 }}>
+          {/* Background image */}
           <img
             src="https://s.krea.ai/nodesHeaderBannerBlurGradient.webp"
             alt=""
-            className="absolute inset-0 w-full h-full object-cover object-center pointer-events-none"
-            style={{ zIndex: 1 }}
-            fetchPriority="high"
+            draggable={false}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 1 }}
           />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
+          {/* Blur bleed */}
           <img
             src="https://s.krea.ai/nodesHeaderBannerBlurGradient.webp"
             alt=""
-            className="absolute inset-0 w-full h-full object-cover pointer-events-none scale-[1.3] blur-2xl opacity-[0.15]"
-            style={{ zIndex: 0 }}
+            draggable={false}
+            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", zIndex: 0, transform: "scale(1.35)", filter: "blur(24px)", opacity: 0.14, pointerEvents: "none" }}
           />
-          <div
-            className="relative flex flex-col justify-between gap-6 text-white"
-            style={{ zIndex: 2, minHeight: 280, padding: "clamp(24px, 4vw, 88px)" }}>
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-3">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="https://s.krea.ai/icons/NodeEditor.png" alt="" className="w-9 h-9 object-contain" />
-                <h1 className="font-normal text-[30px] tracking-tight">Node Editor</h1>
+          {/* Gradient vignette */}
+          <div style={{ position: "absolute", inset: 0, zIndex: 2, background: "linear-gradient(to bottom, transparent 40%, var(--bg-base) 100%)", pointerEvents: "none" }} />
+
+          <div style={{
+            position: "relative", zIndex: 3,
+            display: "flex", flexDirection: "column", justifyContent: "space-between",
+            gap: 20, minHeight: 260, padding: "clamp(28px,4vw,80px)",
+            color: "white",
+          }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <img src="https://s.krea.ai/icons/NodeEditor.png" alt="" style={{ width: 32, height: 32, objectFit: "contain" }} />
+                <h1 style={{ fontSize: 28, fontWeight: 400, letterSpacing: "-0.03em", color: "rgba(255,255,255,0.92)" }}>
+                  Node Editor
+                </h1>
               </div>
-              <p className="text-white/60 text-[14px] leading-relaxed font-light" style={{ maxWidth: 380 }}>
+              <p style={{
+                fontSize: 13.5, color: "rgba(255,255,255,0.52)", lineHeight: 1.7,
+                maxWidth: 360, fontWeight: 400,
+              }}>
                 Nodes is the most powerful way to operate Krea. Connect every tool and model into complex automated pipelines.
               </p>
             </div>
+
             <button
               onClick={handleNewWorkflow}
-              className="flex items-center gap-2 text-[14px] font-medium text-black bg-white hover:bg-white/90 rounded-full transition-all w-fit"
-              style={{ padding: "9px 32px" }}>
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "9px 28px",
+                borderRadius: 99,
+                background: "rgba(255,255,255,0.95)",
+                border: "none",
+                color: "#000",
+                fontSize: 13.5,
+                fontWeight: 500,
+                cursor: "pointer",
+                letterSpacing: "-0.01em",
+                width: "fit-content",
+                transition: "background 0.15s ease, transform 0.12s ease",
+              }}
+              onMouseEnter={e => {
+                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,1)"
+                ;(e.currentTarget as HTMLElement).style.transform = "translateY(-1px)"
+              }}
+              onMouseLeave={e => {
+                (e.currentTarget as HTMLElement).style.background = "rgba(255,255,255,0.95)"
+                ;(e.currentTarget as HTMLElement).style.transform = "translateY(0)"
+              }}
+            >
               New Workflow
-              <ArrowRight size={15} />
+              <ArrowRight size={14} />
             </button>
           </div>
         </div>
 
         {/* ── Tabs + controls ── */}
-        <div style={{ padding: "0 clamp(24px, 4vw, 88px)", paddingTop: 48 }}>
-          <div className="flex items-center justify-between pb-3"
-            style={{ borderBottom: "0.5px solid rgba(255,255,255,0.08)" }}>
-            <div className="flex items-center gap-0.5">
+        <div style={{ padding: "0 clamp(28px,4vw,80px)", paddingTop: 36 }}>
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            paddingBottom: 14,
+            borderBottom: "1px solid var(--border)",
+          }}>
+            {/* Tabs */}
+            <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
               {TABS.map(tab => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className="relative h-10 px-4 text-[13px] font-medium capitalize rounded-lg transition-colors"
                   style={{
-                    minWidth: 96,
-                    color: activeTab === tab ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.35)",
-                    background: activeTab === tab ? "rgba(255,255,255,0.08)" : "transparent",
-                  }}>
+                    padding: "7px 16px",
+                    borderRadius: 9,
+                    border: "none",
+                    background: activeTab === tab ? "var(--bg-elevated-hover)" : "transparent",
+                    color: activeTab === tab ? "var(--text-primary)" : "var(--text-muted)",
+                    fontSize: 13,
+                    fontWeight: activeTab === tab ? 500 : 400,
+                    cursor: "pointer",
+                    textTransform: "capitalize",
+                    letterSpacing: "-0.01em",
+                    transition: "background 0.12s ease, color 0.12s ease",
+                  }}
+                  onMouseEnter={e => { if (activeTab !== tab) (e.currentTarget as HTMLElement).style.color = "var(--text-secondary)" }}
+                  onMouseLeave={e => { if (activeTab !== tab) (e.currentTarget as HTMLElement).style.color = "var(--text-muted)" }}
+                >
                   {tab}
                 </button>
               ))}
             </div>
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg text-[13px]"
-                style={{ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.09)" }}>
-                <Search size={12} className="text-white/30 shrink-0" />
-                <input placeholder="Search projects..."
-                  className="bg-transparent text-white/60 placeholder:text-white/20 outline-none w-36 text-[13px]" />
+
+            {/* Controls */}
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <div style={{
+                display: "flex", alignItems: "center", gap: 7,
+                padding: "7px 12px",
+                borderRadius: 9,
+                background: "var(--bg-elevated)",
+                border: "1px solid var(--border)",
+              }}>
+                <Search size={12} style={{ color: "var(--text-ghost)", flexShrink: 0 }} />
+                <input
+                  placeholder="Search projects…"
+                  style={{
+                    background: "transparent", border: "none", outline: "none",
+                    fontSize: 12.5, color: "var(--text-soft)",
+                    fontFamily: "inherit", width: 140,
+                  }}
+                />
               </div>
-              <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] text-white/40 hover:text-white/70 transition-colors"
-                style={{ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.09)" }}>
+              <button style={{
+                display: "flex", alignItems: "center", gap: 5,
+                padding: "7px 12px",
+                borderRadius: 9, border: "1px solid var(--border)",
+                background: "var(--bg-elevated)",
+                color: "var(--text-muted)",
+                fontSize: 12.5, cursor: "pointer",
+                transition: "background 0.12s",
+              }}>
                 Last viewed <ChevronDown size={11} />
               </button>
-              <button className="flex items-center justify-center w-9 h-9 rounded-lg text-white/30 hover:text-white/70 transition-colors"
-                style={{ background: "rgba(255,255,255,0.04)", border: "0.5px solid rgba(255,255,255,0.09)" }}>
+              <button style={{
+                width: 34, height: 34,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                borderRadius: 9, border: "1px solid var(--border)",
+                background: "var(--bg-elevated)",
+                color: "var(--text-muted)",
+                cursor: "pointer",
+                transition: "background 0.12s",
+              }}>
                 <SlidersHorizontal size={13} />
               </button>
             </div>
@@ -225,49 +275,85 @@ export default function NodesPage() {
         </div>
 
         {/* ── Workflow grid ── */}
-        <div style={{ padding: "28px clamp(24px, 4vw, 88px)" }}>
+        <div style={{ padding: "24px clamp(28px,4vw,80px) 48px" }}>
           {loading ? (
-            <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))" }}>
-              {[...Array(5)].map((_, i) => (
-                <div key={i} className="rounded-2xl animate-pulse" style={{ height: 180, background: "#1c1c1c" }} />
+            <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}>
+              {Array.from({ length: 5 }, (_, i) => (
+                <div key={i} style={{
+                  height: 175, borderRadius: 14,
+                  background: "var(--bg-elevated)",
+                  animation: "pulse 1.5s ease-in-out infinite",
+                }} />
               ))}
             </div>
           ) : (
-            <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))" }}>
+            <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))" }}>
 
-              {/* New Workflow card */}
-              <button onClick={handleNewWorkflow} className="flex flex-col group text-left">
-                <div
-                  className="rounded-2xl overflow-hidden flex items-center justify-center transition-all group-hover:brightness-125"
-                  style={{ height: 180, background: "#1a1a1a", border: "0.5px solid rgba(255,255,255,0.07)" }}>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center transition-colors"
-                    style={{ border: "1px solid rgba(255,255,255,0.2)" }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.5)" strokeWidth="2">
-                      <path d="M5 12h14" /><path d="M12 5v14" />
-                    </svg>
+              {/* New Workflow button */}
+              <button
+                onClick={handleNewWorkflow}
+                style={{ display: "flex", flexDirection: "column", textAlign: "left", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+              >
+                <div style={{
+                  height: 175, borderRadius: 14,
+                  background: "var(--bg-elevated)",
+                  border: "1px solid var(--border)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "background 0.15s ease, border-color 0.15s ease",
+                }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.background = "var(--bg-elevated-hover)"
+                    ;(e.currentTarget as HTMLElement).style.borderColor = "var(--border-strong)"
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.background = "var(--bg-elevated)"
+                    ;(e.currentTarget as HTMLElement).style.borderColor = "var(--border)"
+                  }}
+                >
+                  <div style={{
+                    width: 34, height: 34, borderRadius: "50%",
+                    border: "1px solid var(--border-strong)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    color: "var(--text-ghost)",
+                  }}>
+                    <Plus size={15} />
                   </div>
                 </div>
-                <span className="mt-2 text-[13px] px-0.5 text-white/40 group-hover:text-white/70 transition-colors">
-                  New Workflow
-                </span>
+                <div style={{ marginTop: 8, paddingLeft: 2 }}>
+                  <div style={{ fontSize: 12.5, color: "var(--text-muted)", letterSpacing: "-0.01em" }}>
+                    New Workflow
+                  </div>
+                </div>
               </button>
 
-              {/* Sample + real workflows */}
+              {/* Workflow cards */}
               {displayedCards.map(workflow => (
                 <button
                   key={workflow.id}
                   onClick={() => workflow.isSample ? handleOpenSample() : router.push(`/workflow/${workflow.id}`)}
-                  className="flex flex-col group text-left">
-                  <div
-                    className="rounded-2xl overflow-hidden transition-all group-hover:brightness-110"
-                    style={{ height: 180, border: "0.5px solid rgba(255,255,255,0.08)" }}>
+                  style={{ display: "flex", flexDirection: "column", textAlign: "left", background: "none", border: "none", cursor: "pointer", padding: 0 }}
+                >
+                  <div style={{
+                    height: 175, borderRadius: 14, overflow: "hidden",
+                    border: "1px solid var(--border)",
+                    transition: "border-color 0.15s ease, transform 0.16s ease",
+                  }}
+                    onMouseEnter={e => {
+                      (e.currentTarget as HTMLElement).style.borderColor = "var(--border-strong)"
+                      ;(e.currentTarget as HTMLElement).style.transform = "scale(1.012)"
+                    }}
+                    onMouseLeave={e => {
+                      (e.currentTarget as HTMLElement).style.borderColor = "var(--border)"
+                      ;(e.currentTarget as HTMLElement).style.transform = "scale(1)"
+                    }}
+                  >
                     <WorkflowThumbnail workflow={workflow} />
                   </div>
-                  <div className="mt-2 px-0.5">
-                    <div className="text-[13px] font-medium truncate text-white/80 group-hover:text-white transition-colors">
+                  <div style={{ marginTop: 8, paddingLeft: 2 }}>
+                    <div style={{ fontSize: 12.5, fontWeight: 500, color: "var(--text-soft)", letterSpacing: "-0.012em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {workflow.name}
                     </div>
-                    <div className="text-[11px] mt-0.5 text-white/30">
+                    <div style={{ fontSize: 11, marginTop: 2, color: "var(--text-ghost)" }}>
                       {workflow.isSample
                         ? "Sample workflow"
                         : `Edited ${formatDistanceToNow(new Date(workflow.updatedAt), { addSuffix: true })}`}

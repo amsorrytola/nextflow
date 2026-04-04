@@ -2,128 +2,144 @@
 
 import { Handle, Position, type NodeProps, useEdges } from "@xyflow/react"
 import { Bot } from "lucide-react"
-import { NodeWrapper } from "./NodeWrapper"
+import { NodeWrapper, hs, FieldLabel } from "./NodeWrapper"
 import { useWorkflowStore } from "@/store/workflowStore"
 import type { LLMNodeData } from "@/types"
 
-const P = "#9B6FFF"
-const Y = "#FCC800"
-const B = "#0080FF"
-
-const hs = (color: string, right?: boolean, top?: string): React.CSSProperties => ({
-  background: color, width: 10, height: 10,
-  border: "2.5px solid var(--bg-node)",
-  boxShadow: `0 0 0 2px ${color}28`,
-  ...(right ? { right: -16 } : { left: -16 }),
-  ...(top ? { top } : {}),
-})
+const P = "#9B6FFF"    // purple — LLM accent
+const Y = "#FCC800"    // yellow — text/prompt handles
+const B = "#0080FF"    // blue   — image handles
 
 const MODELS = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro"]
-
-const inputStyle = (focused = false, disabled = false): React.CSSProperties => ({
-  width: "100%",
-  background: focused ? "var(--bg-input-hover)" : "var(--bg-input)",
-  border: `1px solid ${focused ? "rgba(155,111,255,0.40)" : "var(--border-input)"}`,
-  borderRadius: 8,
-  padding: "8px 11px",
-  color: disabled ? "var(--text-ghost)" : "var(--text-soft)",
-  fontSize: 12.5,
-  outline: "none",
-  opacity: disabled ? 0.45 : 1,
-  cursor: disabled ? "not-allowed" : "text",
-  transition: "border-color 0.15s ease, background 0.15s ease",
-  fontFamily: "inherit",
-})
 
 export function LLMNode({ id, data }: NodeProps) {
   const nodeData = data as LLMNodeData
   const { updateNodeData, executionStatus } = useWorkflowStore()
   const status = executionStatus[id] ?? "idle"
-  const edges = useEdges()
-  const conn = (h: string) => edges.some(e => e.target === id && e.targetHandle === h)
+  const edges  = useEdges()
+  const conn   = (h: string) => edges.some(e => e.target === id && e.targetHandle === h)
 
-  const label = (text: string) => (
-    <div style={{ fontSize: 11, color: "var(--text-ghost)", marginBottom: 3, letterSpacing: "0.01em" }}>
-      {text}
-    </div>
-  )
+  const fieldInput = (disabled: boolean): React.CSSProperties => ({
+    width: "100%",
+    background: "var(--bg-input)",
+    border: "1px solid var(--border-input)",
+    borderRadius: 9,
+    padding: "8px 11px",
+    color: disabled ? "var(--text-ghost)" : "var(--text-soft)",
+    fontSize: 12,
+    outline: "none",
+    opacity: disabled ? 0.38 : 1,
+    cursor: disabled ? "not-allowed" : "text",
+    fontFamily: "inherit",
+    lineHeight: 1.55,
+    transition: "border-color 0.14s ease, background 0.14s ease",
+  })
+
+  const onFocus = (accent: string) => (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    e.currentTarget.style.borderColor = `${accent}50`
+    e.currentTarget.style.background = "var(--bg-input-hover)"
+  }
+  const onBlur = (e: React.FocusEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    e.currentTarget.style.borderColor = "var(--border-input)"
+    e.currentTarget.style.background = "var(--bg-input)"
+  }
 
   return (
-    <NodeWrapper nodeId={id} title="Run LLM" icon={<Bot size={11} />}
-      status={status} accentColor={P}>
+    <NodeWrapper nodeId={id} title="Run LLM" icon={<Bot size={11} strokeWidth={2} />} status={status} accentColor={P}>
 
       {/* Model selector */}
-      <select value={nodeData.model}
-        onChange={e => updateNodeData(id, { model: e.target.value } as Partial<LLMNodeData>)}
-        className="nodrag nowheel"
-        style={{ ...inputStyle(), cursor: "pointer", paddingRight: 28,
-          
-        }}>
-        {MODELS.map(m => <option key={m} value={m}>{m}</option>)}
-      </select>
+      <div>
+        <FieldLabel>Model</FieldLabel>
+        <select
+          value={nodeData.model}
+          onChange={e => updateNodeData(id, { model: e.target.value } as Partial<LLMNodeData>)}
+          className="nodrag nowheel"
+          style={{ ...fieldInput(false), cursor: "pointer", paddingRight: 28,
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,0.28)' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")`,
+            backgroundRepeat: "no-repeat", backgroundPosition: "right 8px center", backgroundSize: "11px",
+          }}
+          onFocus={onFocus(P)}
+          onBlur={onBlur}
+        >
+          {MODELS.map(m => <option key={m} value={m}>{m}</option>)}
+        </select>
+      </div>
 
       {/* System prompt */}
       <div style={{ position: "relative" }}>
-        <Handle type="target" position={Position.Left} id="system_prompt" style={hs(Y, false, "50%")} />
-        {label("System prompt")}
-        <input disabled={conn("system_prompt")} value={nodeData.systemPrompt}
+        <Handle type="target" position={Position.Left} id="system_prompt" style={hs(Y, "left", "50%")} />
+        <FieldLabel>System prompt</FieldLabel>
+        <input
+          disabled={conn("system_prompt")}
+          value={nodeData.systemPrompt}
           onChange={e => updateNodeData(id, { systemPrompt: e.target.value } as Partial<LLMNodeData>)}
-          placeholder="Optional instructions..."
+          placeholder="Optional instructions…"
           className="nodrag nowheel"
-          style={inputStyle(false, conn("system_prompt"))}
-          onFocus={e => { e.currentTarget.style.borderColor = `${Y}50`; e.currentTarget.style.background = "var(--bg-input-hover)" }}
-          onBlur={e => { e.currentTarget.style.borderColor = "var(--border-input)"; e.currentTarget.style.background = "var(--bg-input)" }}
+          style={fieldInput(conn("system_prompt"))}
+          onFocus={onFocus(Y)}
+          onBlur={onBlur}
         />
       </div>
 
       {/* User message / prompt */}
       <div style={{ position: "relative" }}>
-        <Handle type="target" position={Position.Left} id="prompt" style={hs(Y, false, "36px")} />
-        <Handle type="target" position={Position.Left} id="user_message" style={hs(Y, false, "36px")} />
-        {label("Prompt")}
-        <textarea disabled={conn("prompt") || conn("user_message")}
+        <Handle type="target" position={Position.Left} id="prompt"       style={hs(Y, "left", "38px")} />
+        <Handle type="target" position={Position.Left} id="user_message" style={hs(Y, "left", "38px")} />
+        <FieldLabel>Prompt</FieldLabel>
+        <textarea
+          disabled={conn("prompt") || conn("user_message")}
           value={nodeData.userMessage}
           onChange={e => updateNodeData(id, { userMessage: e.target.value } as Partial<LLMNodeData>)}
           placeholder="What would you like to generate?"
-          rows={3} className="nodrag nowheel"
-          style={{ ...inputStyle(false, conn("prompt") || conn("user_message")), resize: "none", lineHeight: 1.6 }}
-          onFocus={e => { e.currentTarget.style.borderColor = `${Y}50`; e.currentTarget.style.background = "var(--bg-input-hover)" }}
-          onBlur={e => { e.currentTarget.style.borderColor = "var(--border-input)"; e.currentTarget.style.background = "var(--bg-input)" }}
+          rows={3}
+          className="nodrag nowheel"
+          style={{ ...fieldInput(conn("prompt") || conn("user_message")), resize: "none" }}
+          onFocus={onFocus(Y)}
+          onBlur={onBlur}
         />
       </div>
 
       {/* Images handle */}
-      <div style={{ position: "relative", display: "flex", alignItems: "center", height: 28 }}>
-        <Handle type="target" position={Position.Left} id="images" style={hs(B, false, "50%")} />
-        <span style={{ fontSize: 11, color: "var(--text-ghost)", marginLeft: 4 }}>
-          images {conn("images") && <span style={{ color: B }}>● connected</span>}
+      <div style={{ position: "relative", display: "flex", alignItems: "center", height: 26 }}>
+        <Handle type="target" position={Position.Left} id="images" style={hs(B, "left", "50%")} />
+        <span style={{ fontSize: 11, color: "var(--text-ghost)", marginLeft: 2 }}>
+          images{" "}
+          {conn("images") && <span style={{ color: B }}>● connected</span>}
         </span>
       </div>
 
       {/* Output handle */}
-      <Handle type="source" position={Position.Right} id="output" style={hs(P, true, "50%")} />
+      <Handle type="source" position={Position.Right} id="output" style={hs(P, "right", "50%")} />
 
       {/* Result */}
       {nodeData.result && (
         <div style={{
-          marginTop: 2, padding: "10px 12px", background: "rgba(41,210,70,0.06)",
-          borderRadius: 10, border: "1px solid rgba(41,210,70,0.18)",
-          animation: "fadeIn 0.25s ease",
+          padding: "10px 12px",
+          background: "rgba(41,210,70,0.055)",
+          border: "1px solid rgba(41,210,70,0.16)",
+          borderRadius: 10,
+          animation: "fadeIn 0.22s ease",
         }}>
-          <div style={{ fontSize: 10, color: "#29D246", marginBottom: 5, fontWeight: 600,
-            textTransform: "uppercase", letterSpacing: "0.06em" }}>Output</div>
-          <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.65,
-            whiteSpace: "pre-wrap", maxHeight: 140, overflowY: "auto" }}>
+          <div style={{ fontSize: 9.5, color: "var(--krea-green)", marginBottom: 5, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em" }}>
+            Output
+          </div>
+          <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.65, whiteSpace: "pre-wrap", maxHeight: 140, overflowY: "auto" }}>
             {nodeData.result}
           </p>
         </div>
       )}
+
       {nodeData.error && (
-        <div style={{ padding: "9px 12px", background: "rgba(255,69,69,0.07)",
-          borderRadius: 10, border: "1px solid rgba(255,69,69,0.22)" }}>
-          <div style={{ fontSize: 10, color: "#FF4545", marginBottom: 4, fontWeight: 600,
-            textTransform: "uppercase", letterSpacing: "0.06em" }}>Error</div>
-          <p style={{ fontSize: 11.5, color: "rgba(255,100,100,0.85)" }}>{nodeData.error}</p>
+        <div style={{
+          padding: "9px 12px",
+          background: "rgba(255,69,69,0.065)",
+          border: "1px solid rgba(255,69,69,0.20)",
+          borderRadius: 10,
+        }}>
+          <div style={{ fontSize: 9.5, color: "var(--krea-red)", marginBottom: 4, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.07em" }}>
+            Error
+          </div>
+          <p style={{ fontSize: 11.5, color: "rgba(255,100,100,0.82)" }}>{nodeData.error}</p>
         </div>
       )}
     </NodeWrapper>
