@@ -51,37 +51,20 @@ export function NodeWrapper({
     : "transparent"
 
   return (
-    // NOTE: NO `nodrag` class here — that was preventing node dragging!
     <div
       className="flex flex-col"
-      style={{ minWidth: 256, maxWidth: 320 }}
+      style={{ minWidth: 272, maxWidth: 340 }}
       onMouseEnter={() => setActionsVisible(true)}
       onMouseLeave={() => setActionsVisible(false)}
     >
-      {/* Title row — floats above card like Krea's design */}
-      <div
-        className="absolute flex items-center gap-1"
-        style={{ top: -20, left: 4 }}
-      >
-        {icon && (
-          <span style={{ color: titleColor ?? accentColor }}>{icon}</span>
-        )}
-        <span
-          className="text-[12px] font-normal truncate max-w-[160px]"
-          style={{ color: titleColor ?? accentColor }}
-        >
-          {title}
-        </span>
-      </div>
-
-      {/* Card body — matches Krea's dark card with subtle border */}
       <div
         className={cn(
-          "rounded-[12px] relative overflow-visible transition-all duration-300",
+          "rounded-[16px] relative overflow-visible transition-all duration-300",
           className
         )}
         style={{
-          background: "var(--bg-node)",
+          background:
+            "linear-gradient(180deg, color-mix(in srgb, var(--bg-node) 94%, white 6%) 0%, var(--bg-node) 100%)",
           border: `1px solid ${
             isRunning || isSuccess || isError
               ? outlineColor + "60"
@@ -94,13 +77,70 @@ export function NodeWrapper({
               ? `0 0 0 1px ${shadowColor}30, 0 0 12px ${shadowColor}20`
               : isError
               ? `0 0 0 1px ${shadowColor}40, 0 0 12px ${shadowColor}25`
-              : "0 2px 8px color-mix(in srgb, var(--bg-primary) 60%, transparent)",
+              : "0 16px 40px rgba(0,0,0,0.22), 0 2px 10px rgba(0,0,0,0.18)",
           outline: isRunning ? `2px solid ${outlineColor}` : "none",
           outlineOffset: 1,
           transition:
-            "border-color 0.3s ease-out, box-shadow 0.3s ease-out, outline 0.3s ease-out",
+            "border-color 0.25s ease-out, box-shadow 0.25s ease-out, outline 0.25s ease-out, transform 0.2s ease-out",
+          transform: actionsVisible ? "translateY(-1px)" : "translateY(0px)",
         }}
       >
+        <div
+          className="node-drag-handle flex items-center justify-between gap-3 px-3.5 py-2.5"
+          style={{
+            borderBottom: "1px solid color-mix(in srgb, var(--border) 88%, transparent)",
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.045) 0%, rgba(255,255,255,0.015) 100%)",
+            borderTopLeftRadius: 16,
+            borderTopRightRadius: 16,
+          }}
+        >
+          <div className="flex items-center gap-2 min-w-0">
+            <span
+              className="flex items-center justify-center shrink-0"
+              style={{
+                width: 20,
+                height: 20,
+                borderRadius: 8,
+                color: titleColor ?? accentColor,
+                background: `${titleColor ?? accentColor}14`,
+                border: `1px solid ${titleColor ?? accentColor}22`,
+              }}
+            >
+              {icon}
+            </span>
+            <div className="min-w-0">
+              <div
+                className="text-[12px] font-medium truncate"
+                style={{ color: "var(--text-primary)" }}
+              >
+                {title}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span
+              style={{
+                width: 6,
+                height: 6,
+                borderRadius: 999,
+                background: isRunning ? accentColor : isSuccess ? "#4CAF50" : isError ? "#ef4444" : "rgba(255,255,255,0.18)",
+                boxShadow: isRunning ? `0 0 10px ${accentColor}80` : "none",
+              }}
+            />
+            <div
+              aria-hidden="true"
+              className="flex flex-col gap-[3px]"
+              style={{ opacity: 0.42 }}
+            >
+              <span style={{ width: 3, height: 3, borderRadius: 999, background: "var(--text-faint)" }} />
+              <span style={{ width: 3, height: 3, borderRadius: 999, background: "var(--text-faint)" }} />
+              <span style={{ width: 3, height: 3, borderRadius: 999, background: "var(--text-faint)" }} />
+            </div>
+          </div>
+        </div>
+
         {nodeId && (
           <div
             className="absolute left-0 top-3 z-30 flex flex-col gap-2 transition-all duration-150"
@@ -139,7 +179,7 @@ export function NodeWrapper({
         {/* Running pulse ring */}
         {isRunning && (
           <div
-            className="absolute inset-0 rounded-[12px] pointer-events-none"
+            className="absolute inset-0 rounded-[16px] pointer-events-none"
             style={{
               animation: "krea-pulse-ring 1.5s ease-out infinite",
               border: `1px solid ${accentColor}`,
@@ -147,7 +187,7 @@ export function NodeWrapper({
           />
         )}
 
-        <div className="p-3 flex flex-col gap-2.5">{children}</div>
+        <div className="p-3.5 flex flex-col gap-3">{children}</div>
       </div>
 
       <style>{`

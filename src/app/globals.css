@@ -74,6 +74,7 @@ body {
   box-shadow: none !important;
   background: transparent !important;
   border-radius: 0 !important;
+  cursor: default !important;
 }
 
 /* CRITICAL: remove selected node's default purple ring (we handle it ourselves) */
@@ -81,11 +82,23 @@ body {
   outline: none !important;
   box-shadow: none !important;
 }
+.react-flow__node:hover > * {
+  filter: brightness(1.03);
+}
 .react-flow__node:focus {
   outline: none !important;
 }
 .react-flow__node:focus-visible {
   outline: none !important;
+}
+
+.node-drag-handle {
+  cursor: grab !important;
+  user-select: none;
+}
+
+.node-drag-handle:active {
+  cursor: grabbing !important;
 }
 
 /* Handles */

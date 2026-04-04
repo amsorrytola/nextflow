@@ -30,10 +30,14 @@ interface WorkflowState {
   addNode: (node: WorkflowNode) => void
   updateNodeData: (nodeId: string, data: Partial<AnyNodeData>) => void
   removeNode: (nodeId: string) => void
+  removeEdge: (edgeId: string) => void
+  removeSelectedElements: () => void
 
   // Selection
   selectedNodeIds: string[]
+  selectedEdgeIds: string[]
   setSelectedNodeIds: (ids: string[]) => void
+  setSelectedEdgeIds: (ids: string[]) => void
 
   // Execution status per node
   executionStatus: ExecutionState
@@ -99,8 +103,28 @@ export const useWorkflowStore = create<WorkflowState>()(
           ),
         })),
 
+      removeEdge: (edgeId) =>
+        set((state) => ({
+          edges: state.edges.filter((e) => e.id !== edgeId),
+        })),
+
+      removeSelectedElements: () =>
+        set((state) => ({
+          nodes: state.nodes.filter((n) => !state.selectedNodeIds.includes(n.id)),
+          edges: state.edges.filter(
+            (e) =>
+              !state.selectedEdgeIds.includes(e.id) &&
+              !state.selectedNodeIds.includes(e.source) &&
+              !state.selectedNodeIds.includes(e.target)
+          ),
+          selectedNodeIds: [],
+          selectedEdgeIds: [],
+        })),
+
       selectedNodeIds: [],
+      selectedEdgeIds: [],
       setSelectedNodeIds: (ids) => set({ selectedNodeIds: ids }),
+      setSelectedEdgeIds: (ids) => set({ selectedEdgeIds: ids }),
 
       executionStatus: {},
       setNodeExecutionStatus: (nodeId, status) =>

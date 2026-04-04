@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState, useRef } from "react"
+import { useCallback, useEffect, useState } from "react"
 import {
   ReactFlow,
   Background,
@@ -144,6 +144,9 @@ function CanvasInner() {
     onEdgesChange,
     onConnect,
     setSelectedNodeIds,
+    setSelectedEdgeIds,
+    removeEdge,
+    removeSelectedElements,
     executionStatus,
   } = useWorkflowStore()
 
@@ -173,11 +176,38 @@ function CanvasInner() {
   )
 
   const onSelectionChange = useCallback(
-    ({ nodes: selectedNodes }: { nodes: { id: string }[] }) => {
+    ({
+      nodes: selectedNodes,
+      edges: selectedEdges,
+    }: {
+      nodes: { id: string }[]
+      edges: { id: string }[]
+    }) => {
       setSelectedNodeIds(selectedNodes.map((n) => n.id))
+      setSelectedEdgeIds(selectedEdges.map((e) => e.id))
     },
-    [setSelectedNodeIds]
+    [setSelectedEdgeIds, setSelectedNodeIds]
   )
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      const isTypingTarget =
+        target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        target?.isContentEditable
+
+      if (isTypingTarget) return
+
+      if (event.key === "Delete" || event.key === "Backspace") {
+        event.preventDefault()
+        removeSelectedElements()
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown)
+    return () => window.removeEventListener("keydown", onKeyDown)
+  }, [removeSelectedElements])
 
   const handleContextMenu = useCallback(
     (event: React.MouseEvent) => {
@@ -242,12 +272,13 @@ function CanvasInner() {
           edgeTypes={edgeTypes}
           fitView
           fitViewOptions={{ padding: 0.18 }}
-          deleteKeyCode={["Delete", "Backspace"]}
+          deleteKeyCode={null}
           multiSelectionKeyCode="Shift"
           style={{ background: "var(--bg-primary)" }}
           minZoom={0.2}
           maxZoom={2}
           defaultEdgeOptions={{ type: "kreaEdge", animated: false }}
+          nodeDragHandle=".node-drag-handle"
           nodesDraggable={true}
           nodesConnectable={true}
           elementsSelectable={true}
@@ -256,6 +287,16 @@ function CanvasInner() {
           // Dismiss context menu on canvas click
           onPaneClick={() => setContextMenu(null)}
           onNodeClick={() => setContextMenu(null)}
+          onEdgeClick={(_, edge) => {
+            setContextMenu(null)
+            setSelectedNodeIds([])
+            setSelectedEdgeIds([edge.id])
+          }}
+          onEdgeDoubleClick={(_, edge) => {
+            setContextMenu(null)
+            removeEdge(edge.id)
+            setSelectedEdgeIds([])
+          }}
         >
           <Background
             variant={BackgroundVariant.Dots}
