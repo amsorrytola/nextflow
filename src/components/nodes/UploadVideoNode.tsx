@@ -16,7 +16,6 @@ export function UploadVideoNode({ id, data }: NodeProps) {
 
   const { upload, uploading, progress } = useTransloaditUpload({
     templateId: process.env.NEXT_PUBLIC_TRANSLOADIT_VIDEO_TEMPLATE_ID!,
-    accept: ".mp4,.mov,.webm,.m4v",
     onSuccess: r => updateNodeData(id, { videoUrl: r.url, fileName: r.name } as Partial<UploadVideoNodeData>),
     onError: err => alert(err),
   })
@@ -42,9 +41,8 @@ export function UploadVideoNode({ id, data }: NodeProps) {
     <NodeWrapper nodeId={id} title="Video" icon={<VideoIcon size={11} strokeWidth={2} />}
       status={status} accentColor={G} titleColor={G}>
 
-      {/* Handles */}
+      {/* Output handle only — upload nodes are sources, not targets */}
       <Handle type="source" position={Position.Right} id="outputVideo" style={{ ...hs(G, "right"), top: "40%" }} />
-      <Handle type="target" position={Position.Left}  id="video"       style={{ ...hs(G, "left"),  top: "40%" }} />
 
       {nodeData.videoUrl ? (
         <div className="nodrag" style={{ position: "relative" }}>

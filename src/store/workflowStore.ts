@@ -46,6 +46,7 @@ interface WorkflowState {
 
   // Workflow history (runs)
   runs: WorkflowRunRecord[]
+  setRuns: (runs: WorkflowRunRecord[]) => void
   addRun: (run: WorkflowRunRecord) => void
 
   // Workflow meta
@@ -134,6 +135,7 @@ export const useWorkflowStore = create<WorkflowState>()(
       resetExecutionStatus: () => set({ executionStatus: {} }),
 
       runs: [],
+      setRuns: (runs) => set({ runs }),
       addRun: (run) =>
         set((state) => ({ runs: [run, ...state.runs] })),
 

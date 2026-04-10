@@ -81,22 +81,21 @@ export function NodeWrapper({
           <HoverPill
             label="Run workflow"
             icon={<Workflow size={10} strokeWidth={2.2} />}
-            bg="rgba(31,122,255,0.92)"
+            variant="primary"
             disabled={isRunning}
-            onClick={e => { e.stopPropagation(); void runWorkflowMode("FULL") }}
+            onClick={e => { e.stopPropagation(); runWorkflowMode("FULL") }}
           />
           <HoverPill
             label="Run node"
             icon={<Play size={10} fill="currentColor" strokeWidth={0} />}
-            bg="rgba(32,32,32,0.96)"
+            variant="default"
             disabled={isRunning}
-            onClick={e => { e.stopPropagation(); setSelectedNodeIds([nodeId]); void runWorkflowMode("SINGLE", [nodeId]) }}
+            onClick={e => { e.stopPropagation(); setSelectedNodeIds([nodeId]); runWorkflowMode("SINGLE", [nodeId]) }}
           />
           <HoverPill
             label="Delete"
             icon={<Trash2 size={10} strokeWidth={2.2} />}
-            bg="rgba(48,18,18,0.96)"
-            textColor="var(--krea-red)"
+            variant="danger"
             disabled={isRunning}
             onClick={e => { e.stopPropagation(); removeNode(nodeId) }}
           />
@@ -206,10 +205,29 @@ function DragGrip() {
   )
 }
 
-function HoverPill({ label, icon, bg, textColor, disabled, onClick }: {
-  label: string; icon: React.ReactNode; bg: string; textColor?: string; disabled?: boolean
-  onClick: (e: React.MouseEvent<HTMLButtonElement>) => void
+const PILL_VARIANTS = {
+  primary: {
+    background: "var(--krea-blue)",
+    color: "var(--accent-contrast)",
+    border: "1px solid var(--pill-primary-border)",
+  },
+  default: {
+    background: "var(--bg-pill)",
+    color: "var(--text-soft)",
+    border: "1px solid var(--border)",
+  },
+  danger: {
+    background: "var(--bg-pill)",
+    color: "var(--krea-red)",
+    border: "1px solid var(--danger-border-soft)",
+  },
+} as const
+
+function HoverPill({ label, icon, variant = "default", disabled, onClick }: {
+  label: string; icon: React.ReactNode; variant?: keyof typeof PILL_VARIANTS
+  disabled?: boolean; onClick: (e: React.MouseEvent<HTMLButtonElement>) => void
 }) {
+  const styles = PILL_VARIANTS[variant]
   return (
     <button
       type="button"
@@ -222,19 +240,19 @@ function HoverPill({ label, icon, bg, textColor, disabled, onClick }: {
         gap: 6,
         padding: "5px 11px 5px 9px",
         borderRadius: 9,
-        background: bg,
-        border: "1px solid rgba(255,255,255,0.08)",
-        color: textColor ?? "rgba(255,255,255,0.84)",
+        background: styles.background,
+        border: styles.border,
+        color: styles.color,
         fontSize: 11,
         fontWeight: 500,
         whiteSpace: "nowrap",
         cursor: disabled ? "not-allowed" : "pointer",
         opacity: disabled ? 0.45 : 1,
-        boxShadow: "0 4px 18px rgba(0,0,0,0.45)",
+        boxShadow: "var(--shadow-pill)",
         letterSpacing: "-0.01em",
         transition: "filter 0.1s ease, opacity 0.1s ease",
       }}
-      onMouseEnter={e => { if (!disabled) (e.currentTarget as HTMLElement).style.filter = "brightness(1.14)" }}
+      onMouseEnter={e => { if (!disabled) (e.currentTarget as HTMLElement).style.filter = "brightness(1.10)" }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.filter = "brightness(1)" }}
     >
       {icon}
@@ -266,7 +284,7 @@ export function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 // ── Shared input style ───────────────────────────────────────────────────────
-export function inputStyle(disabled = false, accentColor = "var(--krea-purple)"): React.CSSProperties {
+export function inputStyle(disabled = false): React.CSSProperties {
   return {
     width: "100%",
     background: "var(--bg-input)",

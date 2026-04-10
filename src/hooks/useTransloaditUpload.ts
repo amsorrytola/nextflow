@@ -11,7 +11,6 @@ interface UploadResult {
 
 interface UseTransloaditUploadOptions {
   templateId: string
-  accept: string
   onSuccess: (result: UploadResult) => void
   onError?: (error: string) => void
 }
@@ -67,7 +66,6 @@ async function pollAssembly(assemblyUrl: string): Promise<UploadResult> {
 
 export function useTransloaditUpload({
   templateId,
-  accept,
   onSuccess,
   onError,
 }: UseTransloaditUploadOptions) {
@@ -129,7 +127,7 @@ export function useTransloaditUpload({
         setProgress(0)
       }
     },
-    [templateId, accept, onSuccess, onError]
+    [templateId, onSuccess, onError]
   )
 
   return { upload, uploading, progress }

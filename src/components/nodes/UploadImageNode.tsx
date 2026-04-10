@@ -16,7 +16,6 @@ export function UploadImageNode({ id, data }: NodeProps) {
 
   const { upload, uploading, progress } = useTransloaditUpload({
     templateId: process.env.NEXT_PUBLIC_TRANSLOADIT_IMAGE_TEMPLATE_ID!,
-    accept: ".jpg,.jpeg,.png,.webp,.gif",
     onSuccess: r => updateNodeData(id, { imageUrl: r.url, fileName: r.name } as Partial<UploadImageNodeData>),
     onError: err => alert(err),
   })
@@ -42,9 +41,8 @@ export function UploadImageNode({ id, data }: NodeProps) {
     <NodeWrapper nodeId={id} title="Image" icon={<ImageIcon size={11} strokeWidth={2} />}
       status={status} accentColor={B} titleColor={B}>
 
-      {/* Handles */}
+      {/* Output handle only — upload nodes are sources, not targets */}
       <Handle type="source" position={Position.Right} id="outputImage" style={{ ...hs(B, "right"), top: "40%" }} />
-      <Handle type="target" position={Position.Left}  id="image"       style={{ ...hs(B, "left"),  top: "40%" }} />
 
       {nodeData.imageUrl ? (
         <div className="nodrag" style={{ position: "relative" }}>

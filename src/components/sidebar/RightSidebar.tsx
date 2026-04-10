@@ -33,6 +33,18 @@ function NodeStatusDot({ status }: { status: "success" | "failed" | "running" | 
   return <div style={{ width: 6, height: 6, borderRadius: "50%", background: color, flexShrink: 0, marginTop: 5 }} />
 }
 
+function summarizeValue(value: unknown): string {
+  if (value == null) return "None"
+  if (typeof value === "string") return value
+  if (typeof value === "number" || typeof value === "boolean") return String(value)
+  if (Array.isArray(value)) return value.map(summarizeValue).join(", ")
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return String(value)
+  }
+}
+
 export function RightSidebar({ panel, onClose }: RightSidebarProps) {
   const runs = useWorkflowStore(s => s.runs)
   if (!panel) return null
@@ -217,6 +229,16 @@ function HistoryPanel({ runs }: { runs: WorkflowRunRecord[] }) {
                     {nr.error && (
                       <p style={{ fontSize: 10.5, color: "rgba(255,100,100,0.65)", marginTop: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {nr.error}
+                      </p>
+                    )}
+                    {Object.keys(nr.inputs).length > 0 && (
+                      <p style={{ fontSize: 10.5, color: "var(--text-ghost)", marginTop: 3, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                        Inputs: {Object.entries(nr.inputs).map(([key, value]) => `${key}: ${summarizeValue(value)}`).join(" | ")}
+                      </p>
+                    )}
+                    {Object.keys(nr.outputs).length > 0 && (
+                      <p style={{ fontSize: 10.5, color: "var(--text-ghost)", marginTop: 3, lineHeight: 1.45, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                        Output: {Object.entries(nr.outputs).map(([, value]) => summarizeValue(value)).join(" | ")}
                       </p>
                     )}
                   </div>

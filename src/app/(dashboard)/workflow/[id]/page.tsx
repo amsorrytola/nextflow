@@ -10,13 +10,13 @@ import { KreaTopBar } from "@/components/canvas/KreaTopBar"
 import { useWorkflowStore } from "@/store/workflowStore"
 import { getSampleWorkflow } from "@/lib/sampleWorkflow"
 import { useRouter } from "next/navigation"
+import type { WorkflowRunRecord } from "@/types/workflow"
 
 export type RightPanelView = "assets" | "history" | null
 
 export default function WorkflowPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const [mounted, setMounted] = useState(false)
   const [rightPanel, setRightPanel] = useState<RightPanelView>(null)
   const {
     nodes,
@@ -24,6 +24,7 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
     workflowName,
     setNodes,
     setEdges,
+    setRuns,
     setWorkflowId,
     setWorkflowName,
   } = useWorkflowStore()
@@ -31,10 +32,9 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
   const autosaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const lastSavedSnapshotRef = useRef("")
 
-  useEffect(() => { setMounted(true) }, [])
-
   useEffect(() => {
     loadCompleteRef.current = false
+    setRuns([])
 
     // "sample" → load the built-in sample workflow
     if (id === "sample") {
@@ -60,14 +60,22 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
     }
 
     // Load from DB
-    fetch(`/api/workflows/${id}`)
-      .then(r => r.json())
-      .then(data => {
+    Promise.all([
+      fetch(`/api/workflows/${id}`).then(r => r.json()),
+      fetch(`/api/workflows/${id}/runs`).then(r => r.json()).catch(() => []),
+    ])
+      .then(([data, runData]) => {
         if (data.id) {
           setWorkflowId(data.id)
           setWorkflowName(data.name)
           if (Array.isArray(data.nodes)) setNodes(data.nodes)
           if (Array.isArray(data.edges)) setEdges(data.edges)
+          if (Array.isArray(runData)) {
+            setRuns(runData.map((run) => ({
+              ...run,
+              createdAt: new Date(run.createdAt),
+            })) as WorkflowRunRecord[])
+          }
           lastSavedSnapshotRef.current = JSON.stringify({
             name: data.name,
             nodes: Array.isArray(data.nodes) ? data.nodes : [],
@@ -77,10 +85,10 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
         }
       })
       .catch(console.error)
-  }, [id, setNodes, setEdges, setWorkflowId, setWorkflowName])
+  }, [id, setNodes, setEdges, setRuns, setWorkflowId, setWorkflowName])
 
   useEffect(() => {
-    if (!mounted || !loadCompleteRef.current || id === "sample") return
+    if (!loadCompleteRef.current || id === "sample") return
 
     const snapshot = JSON.stringify({
       name: workflowName,
@@ -138,18 +146,10 @@ export default function WorkflowPage({ params }: { params: Promise<{ id: string 
     return () => {
       if (autosaveTimeoutRef.current) clearTimeout(autosaveTimeoutRef.current)
     }
-  }, [mounted, id, nodes, edges, workflowName, router, setWorkflowId])
-
-  if (!mounted) {
-    return (
-      <div className="flex h-screen w-screen items-center justify-center" style={{ background: "var(--bg-primary)" }}>
-        <div className="text-sm" style={{ color: "var(--text-ghost)" }}>Loading...</div>
-      </div>
-    )
-  }
+  }, [id, nodes, edges, workflowName, router, setWorkflowId])
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden" style={{ background: "var(--bg-primary)", color: "var(--text-primary)" }}>
+    <div className="flex h-screen w-screen overflow-hidden" style={{ background: "var(--bg-base)", color: "var(--text-primary)" }}>
       <KreaLeftSidebar />
       <div className="flex flex-col flex-1 min-w-0 relative">
         <KreaTopBar workflowId={id} rightPanel={rightPanel} onRightPanelChange={setRightPanel} />

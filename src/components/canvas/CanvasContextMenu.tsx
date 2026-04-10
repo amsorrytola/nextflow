@@ -3,7 +3,7 @@
 import { useEffect, useRef, useCallback } from "react"
 import {
   Video, Type, Image as ImageIcon, Mic, Box, Layers,
-  Zap, Hash, Film, Crop, Bot, Search, ChevronRight,
+  Zap, Hash, Film, Search, ChevronRight,
 } from "lucide-react"
 import { useWorkflowStore } from "@/store/workflowStore"
 import type { AnyNodeData, NodeType } from "@/types"

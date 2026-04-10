@@ -1,4 +1,5 @@
 "use client"
+/* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useState } from "react"
 import { KreaLeftSidebar } from "@/components/sidebar/KreaLeftSidebar"
@@ -82,10 +83,7 @@ export default function NodesPage() {
   const router = useRouter()
   const [workflows, setWorkflows] = useState<WorkflowCard[]>([])
   const [loading, setLoading] = useState(true)
-  const [mounted, setMounted] = useState(false)
   const [activeTab, setActiveTab] = useState("projects")
-
-  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     fetch("/api/workflows")
@@ -113,8 +111,6 @@ export default function NodesPage() {
   }
 
   const handleOpenSample = () => { router.push("/workflow/sample") }
-
-  if (!mounted) return null
 
   const displayedCards: WorkflowCard[] = [SAMPLE_CARD, ...workflows]
 

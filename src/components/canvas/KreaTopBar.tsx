@@ -20,8 +20,8 @@ interface KreaTopBarProps {
 const pill = (active = false): React.CSSProperties => ({
   display: "flex", alignItems: "center", gap: 6,
   height: 30, padding: "0 10px", borderRadius: 8,
-  border: `1px solid rgba(255,255,255,${active ? "0.10" : "0.068"})`,
-  background: active ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.042)",
+  border: `1px solid ${active ? "var(--border-strong)" : "var(--border)"}`,
+  background: active ? "var(--bg-elevated-hover)" : "var(--bg-elevated)",
   backdropFilter: "blur(18px)", WebkitBackdropFilter: "blur(18px)",
   cursor: "pointer", whiteSpace: "nowrap" as const,
   fontSize: 12.5, fontWeight: 400, letterSpacing: "-0.012em",
@@ -31,8 +31,8 @@ const pill = (active = false): React.CSSProperties => ({
 })
 
 const hover = (el: HTMLElement, enter: boolean) => {
-  el.style.background    = enter ? "rgba(255,255,255,0.075)" : "rgba(255,255,255,0.042)"
-  el.style.borderColor   = enter ? "rgba(255,255,255,0.11)"  : "rgba(255,255,255,0.068)"
+  el.style.background    = enter ? "var(--bg-elevated-hover)" : "var(--bg-elevated)"
+  el.style.borderColor   = enter ? "var(--border-strong)"  : "var(--border)"
   el.style.color         = enter ? "var(--text-primary)"      : "var(--text-secondary)"
 }
 
@@ -44,13 +44,15 @@ export function KreaTopBar({ workflowId, rightPanel, onRightPanelChange }: KreaT
   const [draft, setDraft]             = useState(workflowName)
   const [dropOpen, setDropOpen]       = useState(false)
   const [panelOpen, setPanelOpen]     = useState(false)
-  const [theme, setTheme]             = useState<ThemeMode>("dark")
+  const [theme, setTheme]             = useState<ThemeMode>(() => {
+    if (typeof window === "undefined") return "dark"
+    return localStorage.getItem("nextflow-theme") === "light" ? "light" : "dark"
+  })
 
   const inputRef    = useRef<HTMLInputElement>(null)
   const dropRef     = useRef<HTMLDivElement>(null)
   const panelRef    = useRef<HTMLDivElement>(null)
 
-  useEffect(() => { if (!editing) setDraft(workflowName) }, [workflowName, editing])
   useEffect(() => { if (editing) { inputRef.current?.focus(); inputRef.current?.select() } }, [editing])
 
   useEffect(() => {
@@ -66,10 +68,8 @@ export function KreaTopBar({ workflowId, rightPanel, onRightPanelChange }: KreaT
   }, [panelOpen])
 
   useEffect(() => {
-    const saved = localStorage.getItem("nextflow-theme") as ThemeMode | null
-    const t = saved === "light" ? "light" : "dark"
-    setTheme(t); document.documentElement.setAttribute("data-theme", t)
-  }, [])
+    document.documentElement.setAttribute("data-theme", theme)
+  }, [theme])
 
   const startEdit = useCallback((e?: React.MouseEvent) => {
     e?.stopPropagation(); setDropOpen(false); setEditing(true); setDraft(workflowName)
@@ -149,15 +149,15 @@ export function KreaTopBar({ workflowId, rightPanel, onRightPanelChange }: KreaT
         {dropOpen && !editing && (
           <div style={{
             position:"absolute", top:"calc(100% + 6px)", left:0, minWidth:228,
-            borderRadius:14, border:"1px solid rgba(255,255,255,0.08)",
-            background:"rgba(11,11,11,0.97)", backdropFilter:"blur(28px)", WebkitBackdropFilter:"blur(28px)",
-            boxShadow:"0 24px 72px rgba(0,0,0,0.80), 0 4px 16px rgba(0,0,0,0.50)",
+            borderRadius:14, border:"1px solid var(--border)",
+            background:"var(--bg-menu)", backdropFilter:"blur(28px)", WebkitBackdropFilter:"blur(28px)",
+            boxShadow:"var(--shadow-menu)",
             zIndex:9999, overflow:"hidden",
             animation:"contextMenuIn 0.14s cubic-bezier(0.22,1,0.36,1) both",
           }}>
             {/* Mini workflow SVG preview */}
             <div style={{ padding:"10px 10px 6px" }}>
-              <div style={{ borderRadius:9, overflow:"hidden", background:"rgba(255,255,255,0.024)", border:"1px solid rgba(255,255,255,0.055)", height:68 }}>
+              <div style={{ borderRadius:9, overflow:"hidden", background:"var(--bg-elevated)", border:"1px solid var(--border)", height:68 }}>
                 <svg viewBox="0 0 208 68" style={{ width:"100%", height:"100%" }}>
                   <rect x="6"   y="18" width="40" height="22" rx="5" fill="#141414" stroke="#0080FF" strokeWidth="0.55" />
                   <rect x="6"   y="46" width="40" height="14" rx="4" fill="#141414" stroke="#FCC800" strokeWidth="0.5"  />
@@ -171,7 +171,7 @@ export function KreaTopBar({ workflowId, rightPanel, onRightPanelChange }: KreaT
                 </svg>
               </div>
             </div>
-            <div style={{ height:1, background:"rgba(255,255,255,0.058)", margin:"0 10px" }} />
+            <div style={{ height:1, background:"var(--border)", margin:"0 10px" }} />
             <div style={{ padding:"5px 5px 7px", display:"flex", flexDirection:"column", gap:1 }}>
               <DI icon={<ArrowLeft size={13}/>}    label="Back"          onClick={() => { setDropOpen(false); router.push("/nodes") }} />
               <DI icon={<Pencil size={13}/>}       label="Rename"        onClick={startEdit} />
@@ -179,7 +179,7 @@ export function KreaTopBar({ workflowId, rightPanel, onRightPanelChange }: KreaT
                 right={<Check size={11} style={{color:"#4d9de0"}}/>}  onClick={() => setDropOpen(false)} />
               <DI icon={<Upload size={13}/>}        label="Import"       onClick={() => setDropOpen(false)} />
               <DI icon={<Download size={13}/>}      label="Export"       onClick={() => setDropOpen(false)} />
-              <div style={{ height:1, background:"rgba(255,255,255,0.055)", margin:"3px 4px" }} />
+              <div style={{ height:1, background:"var(--border)", margin:"3px 4px" }} />
               <div style={{ padding:"3px 9px", fontSize:10, color:"var(--text-ghost)", letterSpacing:"0.055em", textTransform:"uppercase" }}>Workspaces</div>
               <DI icon={<Building2 size={13}/>}    label="Default Workspace" onClick={() => setDropOpen(false)} />
             </div>
@@ -226,9 +226,9 @@ export function KreaTopBar({ workflowId, rightPanel, onRightPanelChange }: KreaT
           {panelOpen && (
             <div style={{
               position:"absolute", top:"calc(100% + 6px)", right:0, minWidth:215,
-              borderRadius:12, border:"1px solid rgba(255,255,255,0.08)",
-              background:"rgba(11,11,11,0.97)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)",
-              boxShadow:"0 18px 52px rgba(0,0,0,0.72)", zIndex:9999,
+              borderRadius:12, border:"1px solid var(--border)",
+              background:"var(--bg-menu)", backdropFilter:"blur(24px)", WebkitBackdropFilter:"blur(24px)",
+              boxShadow:"var(--shadow-menu)", zIndex:9999,
               animation:"contextMenuIn 0.13s cubic-bezier(0.22,1,0.36,1) both",
               padding:"5px",
             }}>
@@ -254,7 +254,7 @@ function DI({ icon, label, right, onClick }: { icon: React.ReactNode; label: str
       textAlign:"left", color:"var(--text-secondary)", fontSize:12.5, letterSpacing:"-0.01em",
       transition:"background 0.10s, color 0.10s",
     }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background="rgba(255,255,255,0.052)"; (e.currentTarget as HTMLElement).style.color="var(--text-primary)" }}
+      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background="var(--bg-elevated-hover)"; (e.currentTarget as HTMLElement).style.color="var(--text-primary)" }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background="transparent";               (e.currentTarget as HTMLElement).style.color="var(--text-secondary)" }}>
       <span style={{ color:"var(--text-ghost)", display:"flex", flexShrink:0 }}>{icon}</span>
       <span style={{ flex:1 }}>{label}</span>
@@ -268,12 +268,12 @@ function PanelItem({ icon, label, shortcut, active, onClick }: { icon: React.Rea
     <button onClick={onClick} style={{
       display:"flex", alignItems:"center", gap:9, width:"100%", padding:"7px 10px",
       borderRadius:8, border:"none", cursor:"pointer", textAlign:"left",
-      background: active ? "rgba(255,255,255,0.055)" : "transparent",
+      background: active ? "var(--bg-elevated-hover)" : "transparent",
       color: active ? "var(--text-primary)" : "var(--text-secondary)",
       fontSize:12.5, letterSpacing:"-0.01em",
       transition:"background 0.10s, color 0.10s",
     }}
-      onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background="rgba(255,255,255,0.042)"; (e.currentTarget as HTMLElement).style.color="var(--text-primary)" }}}
+      onMouseEnter={e => { if (!active) { (e.currentTarget as HTMLElement).style.background="var(--bg-elevated)"; (e.currentTarget as HTMLElement).style.color="var(--text-primary)" }}}
       onMouseLeave={e => { if (!active) { (e.currentTarget as HTMLElement).style.background="transparent";              (e.currentTarget as HTMLElement).style.color="var(--text-secondary)" }}}>
       <span style={{ color:"var(--text-ghost)", display:"flex", flexShrink:0 }}>{icon}</span>
       <span style={{ flex:1, fontWeight: active ? 500 : 400 }}>{label}</span>

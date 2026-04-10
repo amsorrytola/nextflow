@@ -1,4 +1,5 @@
 "use client"
+/* eslint-disable @next/next/no-img-element */
 
 import { useState } from "react"
 import { PanelLeft, Search, MoreHorizontal, Video, Type, Image as ImageIcon, Bot, Crop, Film } from "lucide-react"

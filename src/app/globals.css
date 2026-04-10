@@ -44,6 +44,12 @@
   /* Accent */
   --accent:             #9B6FFF;
   --accent-dim:         rgba(155,111,255,0.14);
+  --accent-strong:      #7c4fff;
+  --accent-contrast:    rgba(255,255,255,0.94);
+  --accent-soft-contrast: rgba(255,255,255,0.16);
+  --accent-shadow:      0 4px 18px rgba(124,79,255,0.40), inset 0 1px 0 rgba(255,255,255,0.14);
+  --danger-border-soft: rgba(255,69,69,0.22);
+  --pill-primary-border: rgba(255,255,255,0.15);
 
   /* Shadows */
   --shadow-node:        0 12px 40px rgba(0,0,0,0.60), 0 2px 8px rgba(0,0,0,0.32);
@@ -99,6 +105,13 @@
   --panel-backdrop:     rgba(245,244,239,0.98);
   --selection-bg:       rgba(155,111,255,0.055);
   --selection-border:   rgba(155,111,255,0.26);
+  --accent-dim:         rgba(155,111,255,0.12);
+  --accent-strong:      #8a63ff;
+  --accent-contrast:    rgba(255,255,255,0.98);
+  --accent-soft-contrast: rgba(255,255,255,0.20);
+  --accent-shadow:      0 6px 18px rgba(124,79,255,0.20), inset 0 1px 0 rgba(255,255,255,0.30);
+  --danger-border-soft: rgba(255,69,69,0.18);
+  --pill-primary-border: rgba(0,0,0,0.06);
 }
 
 /* ═══════════════════════════════════════════

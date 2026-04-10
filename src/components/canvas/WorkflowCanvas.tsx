@@ -38,9 +38,7 @@ const HANDLE_TYPES: Record<string, "text" | "image" | "video"> = {
   "textNode:outputText": "text",
   "textNode:output": "text",
   "uploadImageNode:outputImage": "image",
-  "uploadImageNode:output": "image",
   "uploadVideoNode:outputVideo": "video",
-  "uploadVideoNode:output": "video",
   "llmNode:output": "text",
   "cropImageNode:output": "image",
   "extractFrameNode:output": "image",
@@ -66,7 +64,6 @@ const DATA_TYPE_COLORS: Record<string, string> = {
 // ─── Krea-style tubular bezier edge ─────────────────────────────────────────
 // Renders: glow halo + core stroke + animated flow tubes + travel dot
 function KreaEdge({
-  id,
   sourceX, sourceY,
   targetX, targetY,
   sourcePosition, targetPosition,
